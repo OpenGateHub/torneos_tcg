@@ -11,6 +11,11 @@ exports.autenticarUsuario = async (req, res) => {
       return res.status(404).json({ mensaje: 'El usuario no existe' });
     }
 
+    //Verificar que el usuario confirmo su cuenta
+    if(!usuario.activo){
+      return res.status(401).json({mensaje:'Debes confirmar tu cuenta antes de iniciar sesion'})
+    }
+
     const passwordValido = await usuario.validarPassword(password);
     if (!passwordValido) {
       return res.status(401).json({ mensaje: 'Contraseña incorrecta' });
@@ -23,7 +28,14 @@ exports.autenticarUsuario = async (req, res) => {
       { expiresIn: '2h' }
     );
 
-    res.json({ token });
+    res.json({ token,
+      usuario: {
+        id: usuario.id,
+        nombre: usuario.nombre,
+        rol:usuario.rol,
+        email:usuario.email
+      }
+     });
   } catch (error) {
     console.log(error);
     res.status(500).json({ mensaje: 'Hubo un error en el servidor' });

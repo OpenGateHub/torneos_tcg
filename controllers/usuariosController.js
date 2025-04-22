@@ -60,5 +60,69 @@ exports.confirmarCuenta = async (req, res) => {
   res.json({ mensaje: 'Cuenta confirmada correctamente' });
 };
 
+exports.obtenerPerfil = async (req, res) => {
+  try {
+    const usuario = await Usuarios.findByPk(req.usuario.id, {
+      attributes: ['id', 'nombre', 'email', 'rol', 'createdAt']
+    });
 
-// 
+    if (!usuario) {
+      return res.status(404).json({ mensaje: 'Usuario no encontrado' });
+    }
+
+    res.json({ usuario });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ mensaje: 'Error al obtener el perfil' });
+  }
+};
+
+
+exports.actualizarPerfil = async (req, res) => {
+  try {
+    const usuario = await Usuarios.findByPk(req.usuario.id);
+
+    if (!usuario) {
+      return res.status(404).json({ mensaje: 'Usuario no encontrado' });
+    }
+
+    const { nombre, email, password } = req.body;
+
+    usuario.nombre = nombre || usuario.nombre;
+    usuario.email = email || usuario.email;
+
+    if (password) {
+      const bcrypt = require('bcrypt');
+      const salt = await bcrypt.genSalt(10);
+      usuario.password = await bcrypt.hash(password, salt);
+    }
+
+    await usuario.save();
+
+    res.json({ mensaje: 'Perfil actualizado correctamente' });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ mensaje: 'Error al actualizar el perfil' });
+  }
+};
+
+exports.eliminarCuenta = async (req, res) => {
+  try {
+    const usuario = await Usuarios.findByPk(req.usuario.id);
+
+    if (!usuario) {
+      return res.status(404).json({ mensaje: 'Usuario no encontrado' });
+    }
+
+    await usuario.destroy();
+    res.json({ mensaje: 'Cuenta eliminada correctamente' });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ mensaje: 'Error al eliminar la cuenta' });
+  }
+};
+
+
+
+
+
