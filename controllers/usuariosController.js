@@ -90,12 +90,7 @@ exports.actualizarPerfil = async (req, res) => {
 
     usuario.nombre = nombre || usuario.nombre;
     usuario.email = email || usuario.email;
-
-    if (password) {
-      const bcrypt = require('bcrypt');
-      const salt = await bcrypt.genSalt(10);
-      usuario.password = await bcrypt.hash(password, salt);
-    }
+    usuario.password = password || usuario.password
 
     await usuario.save();
 

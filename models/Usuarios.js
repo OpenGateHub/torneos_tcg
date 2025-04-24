@@ -94,6 +94,16 @@ const Usuarios = db.define('Usuarios', {
 Usuarios.prototype.validarPassword = async function(password) {
   return bcrypt.compare(password, this.password);
 };
+// Integracion con la tabla de inscripciones
+Usuarios.associate = models => {
+  Usuarios.belongsToMany(models.Torneo, {
+    through: 'Inscripciones',
+    foreignKey: 'usuarioId',
+    otherKey: 'torneoId',
+    as: 'Torneos'
+  });
+};
+
 
 
 module.exports = Usuarios;

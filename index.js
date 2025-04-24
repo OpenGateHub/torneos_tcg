@@ -2,9 +2,20 @@ const express = require('express');
 const router = require('./routes');
 require('dotenv').config({path:'variables.env'});
 
-//Conexion a la DB
+//Conexion a la DB y carga de modelos
 const db = require('./config/db.js');
-require('./models/Usuarios.js');
+const Usuarios = require('./models/Usuarios.js');
+const Torneo = require('./models/Torneo.js');
+const Inscripciones = require('./models/Inscripciones.js');
+const Enfrentamientos = require('./models/Enfrentamientos.js');
+
+// Llamar a las asociaciones después de cargar los modelos
+Usuarios.associate(db.models);
+Torneo.associate(db.models);
+// Inscripciones.associate(db.models)
+Enfrentamientos.associate(db.models)
+
+// Inscripciones.associate(db.models);
 db.sync().then(()=> console.log("DB conectada")).catch((error)=> console.log(error))
 
 
