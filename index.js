@@ -1,7 +1,7 @@
 const express = require('express');
 const router = require('./routes');
 require('dotenv').config({path:'variables.env'});
-
+const cors = require('cors');
 //Conexion a la DB y carga de modelos
 const db = require('./config/db.js');
 const Usuarios = require('./models/Usuarios.js');
@@ -18,9 +18,14 @@ Enfrentamientos.associate(db.models)
 // Inscripciones.associate(db.models);
 db.sync().then(()=> console.log("DB conectada")).catch((error)=> console.log(error))
 
-
 //Creacion de la App
 const app = express();
+
+// Configurar CORS
+app.use(cors({
+  origin: process.env.URL_FRONTEND, 
+  credentials: true
+}));
 
 // Middleware para leer JSON
 app.use(express.json());

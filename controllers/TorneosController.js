@@ -25,13 +25,16 @@ exports.crearTorneo = async (req, res) => {
 // Obtener torneo por ID
 exports.obtenerTorneo = async (req, res) => {
   try {
-    const torneo = await Torneo.findByPk(req.params.id);
+    const torneo = await Torneo.findByPk(req.params.torneoId);
 
     if (!torneo) {
       return res.status(404).json({ mensaje: 'Torneo no encontrado' });
     }
+    // Calculo de rondas recomendadas con la cantidad de participantes actuales
+    const participantes = torneo.participantes || 0;
+    const rondasRecomendadas = participantes < 2 ? 0 : Math.ceil(Math.log2(participantes));
 
-    res.json({ torneo });
+    res.json({ torneo,rondasRecomendadas });
   } catch (error) {
     console.log(error);
     res.status(500).json({ mensaje: 'Error al obtener el torneo' });
@@ -47,8 +50,10 @@ exports.actualizarTorneo = async (req, res) => {
       return res.status(404).json({ mensaje: 'Torneo no encontrado' });
     }
 
-    const { nombre, fecha_inicio, fecha_fin, estado, descripcion, participantes } = req.body;
+    // Obtener los campos que se desean actualizar
+    const { nombre, fecha_inicio, fecha_fin, estado, descripcion, participantes, cerrarInscripciones } = req.body;
 
+    // Actualizar los valores del torneo
     torneo.nombre = nombre || torneo.nombre;
     torneo.fecha_inicio = fecha_inicio || torneo.fecha_inicio;
     torneo.fecha_fin = fecha_fin || torneo.fecha_fin;
@@ -56,6 +61,12 @@ exports.actualizarTorneo = async (req, res) => {
     torneo.descripcion = descripcion || torneo.descripcion;
     torneo.participantes = participantes || torneo.participantes;
 
+    // Si se recibe la opción de cerrar inscripciones, actualizar el estado
+    if (cerrarInscripciones !== undefined) {
+      torneo.inscripcionesCerradas = cerrarInscripciones;
+    }
+
+    // Guardar los cambios en la base de datos
     await torneo.save();
 
     res.json({ mensaje: 'Torneo actualizado correctamente', torneo });
@@ -64,6 +75,7 @@ exports.actualizarTorneo = async (req, res) => {
     res.status(500).json({ mensaje: 'Error al actualizar el torneo' });
   }
 };
+
 
 // Eliminar torneo
 exports.eliminarTorneo = async (req, res) => {
@@ -108,8 +120,8 @@ exports.inscribirseATorneo = async (req, res) => {
     if (!torneo) {
       return res.status(404).json({ mensaje: 'Torneo no encontrado' });
     }
-    if (!['activo', 'en progreso'].includes(torneo.estado)) {
-      return res.status(400).json({ mensaje: 'No se puede inscribir a un torneo cerrado' });
+    if (!['activo'].includes(torneo.estado)) {
+      return res.status(400).json({ mensaje: 'Las inscripciones estan cerradas' });
     }
 
     // Verificar si ya está inscrito
@@ -174,11 +186,16 @@ exports.obtenerRanking = async (req, res) => {
       const nombre = inscripcion.usuario.nombre;
 
       let victorias = 0;
-      let derrotas = 0;
       let empates = 0;
+      let derrotas = 0;
+      let byes = 0;
 
       enfrentamientos.forEach(enf => {
-        if (enf.ganadorId === usuarioId) {
+        const esBye = enf.jugador2Id === null;
+
+        if (esBye && enf.jugador1Id === usuarioId) {
+          byes++;
+        } else if (enf.ganadorId === usuarioId) {
           victorias++;
         } else if ((enf.jugador1Id === usuarioId || enf.jugador2Id === usuarioId) && enf.ganadorId === null) {
           empates++;
@@ -187,21 +204,28 @@ exports.obtenerRanking = async (req, res) => {
         }
       });
 
-      const total = victorias + derrotas + empates;
+      const total = victorias + empates + derrotas + byes;
+      const puntaje = (victorias * 3) + (empates * 1) + (byes * 1);
       const porcentajeVictorias = total > 0 ? (victorias / total * 100).toFixed(2) : '0.00';
 
       return {
         jugadorId: usuarioId,
         nombre,
         victorias,
-        derrotas,
         empates,
+        derrotas,
+        byes,
         total,
+        puntaje,
         porcentajeVictorias
       };
     });
 
-    ranking.sort((a, b) => b.victorias - a.victorias || a.derrotas - b.derrotas);
+    // Ordenar por puntaje descendente. En caso de empate, menos derrotas primero
+    ranking.sort((a, b) =>
+      b.puntaje - a.puntaje ||
+      a.derrotas - b.derrotas
+    );
 
     res.json(ranking);
   } catch (error) {
@@ -209,5 +233,6 @@ exports.obtenerRanking = async (req, res) => {
     res.status(500).json({ mensaje: 'Error al obtener el ranking' });
   }
 };
+
 
 

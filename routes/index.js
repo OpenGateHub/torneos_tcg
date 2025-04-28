@@ -60,7 +60,9 @@ router.get('/perfil', auth, usuariosController.obtenerPerfil);
   
   /** TORNEOS */
   // Ruta pública o protegida con auth solamente (opcional)
-  router.get('/torneos', auth, torneosController.listarTorneos); 
+  router.get('/torneos', torneosController.listarTorneos); 
+  //ruta publica para ver torneo especifico
+  router.get('/torneos/:torneoId', auth, torneosController.obtenerTorneo); 
   //Inscripciones a torneo
   router.post('/torneos/:id/inscribirse', auth, torneosController.inscribirseATorneo);
   //mostrar el ranking del torneo

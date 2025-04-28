@@ -54,6 +54,10 @@ const Torneo = db.define('Torneo', {
     type: Sequelize.DataTypes.INTEGER,
     allowNull: true,
     defaultValue: 0
+  },
+  inscripcionesCerradas: {
+    type: Sequelize.BOOLEAN,
+    defaultValue: false
   }
 }, {
   timestamps: true,
