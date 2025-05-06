@@ -5,6 +5,7 @@ const { body } = require('express-validator');
 //Middlewares
 const auth = require('../middleware/auth');
 const verificarAdmin = require('../middleware/verificarAdmin')
+const authOpcional = require('../middleware/authOpcional');
 
 //Controllers
 const usuariosController = require('../controllers/usuariosController');
@@ -46,7 +47,7 @@ router.get('/perfil', auth, usuariosController.obtenerPerfil);
     verificarAdmin(['admin']), 
     adminController.chequearPermisos);
   // Gestión de usuarios
-  router.get('/admin/:id', auth, verificarAdmin(['admin']), adminController.verUsuario);
+  router.get('/admin/usuarios/:id', auth, verificarAdmin(['admin']), adminController.verUsuario);
   router.get('/admin/usuarios', auth, verificarAdmin(['admin']), adminController.listarUsuarios);
   router.delete('/admin/usuarios/:id', auth, verificarAdmin(['admin']), adminController.eliminarUsuario);
   router.put('/admin/usuarios/:id/rol', auth, verificarAdmin(['admin']), adminController.cambiarRol);
@@ -54,6 +55,7 @@ router.get('/perfil', auth, usuariosController.obtenerPerfil);
   // Gestión de torneos TODO!
   router.post('/admin/torneos', auth, verificarAdmin(['admin']), torneosController.crearTorneo);
   router.get('/admin/torneos', auth, verificarAdmin(['admin']), torneosController.listarTorneos);
+  router.get('/admin/torneos/:id', auth, verificarAdmin(['admin']), torneosController.obtenerTorneo);
   router.put('/admin/torneos/:id', auth, verificarAdmin(['admin']), torneosController.actualizarTorneo);
   router.delete('/admin/torneos/:id', auth, verificarAdmin(['admin']), torneosController.eliminarTorneo);
   router.get('/admin/torneos/:id/participantes', auth, verificarAdmin(['admin']), torneosController.listarParticipantes);
@@ -62,7 +64,7 @@ router.get('/perfil', auth, usuariosController.obtenerPerfil);
   // Ruta pública o protegida con auth solamente (opcional)
   router.get('/torneos', torneosController.listarTorneos); 
   //ruta publica para ver torneo especifico
-  router.get('/torneos/:torneoId', auth, torneosController.obtenerTorneo); 
+  router.get('/torneos/:id',authOpcional, torneosController.obtenerTorneo); 
   //Inscripciones a torneo
   router.post('/torneos/:id/inscribirse', auth, torneosController.inscribirseATorneo);
   //mostrar el ranking del torneo
@@ -72,7 +74,7 @@ router.get('/perfil', auth, usuariosController.obtenerPerfil);
   // Ruta para listar enfrentamientos por ronda
   router.get('/admin/torneos/:torneoId/enfrentamientos/:ronda', enfrentamientosController.listarEnfrentamientosPorRonda);
   // Ruta para listar enfrentamientos agrupados por rondas
-  router.get('/admin/torneos/:torneoId/enfrentamientos', enfrentamientosController.listarEnfrentamientosAgrupados);
+  router.get('/torneos/:torneoId/enfrentamientos', enfrentamientosController.listarEnfrentamientosAgrupados);
   //Generar la primera ronda de enfrentamientos
   router.post('/admin/torneos/:torneoId/generarEnfrentamientos',auth, verificarAdmin(['admin']), enfrentamientosController.generarPrimerEnfrentamiento);
   //registra los resultados de los enfrentamientos

@@ -12,7 +12,7 @@ exports.generarPrimerEnfrentamiento = async (req, res) => {
   try {
     // Verificar que las inscripciones están cerradas
     const torneo = await Torneo.findByPk(torneoId);
-    if (!torneo || !torneo.inscripcionesCerradas) {
+    if (!torneo || !torneo.estado === 'activo') {
       return res.status(400).json({ mensaje: 'Las inscripciones deben estar cerradas para generar el primer enfrentamiento' });
     }
 
@@ -68,7 +68,7 @@ exports.generarPrimerEnfrentamiento = async (req, res) => {
 };
 
 
-
+//Registrar Resultados de los enfrentamientos
 exports.registrarResultados = async (req, res) => {
   const torneoId = parseInt(req.params.torneoId);
   const resultados = req.body.resultados;

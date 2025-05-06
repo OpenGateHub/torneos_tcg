@@ -3,6 +3,7 @@ const Usuarios = require('../models/Usuarios');
 const Inscripciones = require('../models/Inscripciones');
 const Enfrentamientos = require('../models/Enfrentamientos');
 const { validationResult } = require('express-validator');
+const { Sequelize } = require('sequelize');
 
 // Crear torneo
 exports.crearTorneo = async (req, res) => {
@@ -25,16 +26,51 @@ exports.crearTorneo = async (req, res) => {
 // Obtener torneo por ID
 exports.obtenerTorneo = async (req, res) => {
   try {
-    const torneo = await Torneo.findByPk(req.params.torneoId);
+    const torneo = await Torneo.findByPk(req.params.id);
 
     if (!torneo) {
       return res.status(404).json({ mensaje: 'Torneo no encontrado' });
+    }
+
+    // Verificar si el usuario está inscrito en el torneo
+    let estaInscripto = false;
+    if (req.usuario) {
+      const inscripcion = await Inscripciones.findOne({
+        where: {
+          usuarioId: req.usuario.id,
+          torneoId: torneo.id
+        }
+      });
+      estaInscripto = !!inscripcion; // Si existe la inscripción, está inscrito
     }
     // Calculo de rondas recomendadas con la cantidad de participantes actuales
     const participantes = torneo.participantes || 0;
     const rondasRecomendadas = participantes < 2 ? 0 : Math.ceil(Math.log2(participantes));
 
-    res.json({ torneo,rondasRecomendadas });
+    // Traer inscriptos si el usuario es administrador
+    let inscriptos = [];
+    if (req.usuario && req.usuario.rol === 'admin') {
+      const inscripciones = await Inscripciones.findAll({
+        where: { torneoId: torneo.id },
+        include: [
+          {
+            model: Usuarios,
+            as: 'usuario',
+            attributes: ['id', 'nombre', 'email']
+          }
+        ]
+      });
+
+      // Solo devolver los datos del usuario en la respuesta
+      inscriptos = inscripciones.map(insc => insc.usuario);
+    }
+
+    res.json({
+      torneo,
+      rondasRecomendadas,
+      estaInscripto,
+      inscriptos
+    });
   } catch (error) {
     console.log(error);
     res.status(500).json({ mensaje: 'Error al obtener el torneo' });
@@ -94,14 +130,30 @@ exports.eliminarTorneo = async (req, res) => {
   }
 };
 
-// Listar torneos TODO hecho / falta testing
+// Listar torneos (devuelva por separado los ultimos 2 torneos y los proximos)
+
 exports.listarTorneos = async (req, res) => {
   try {
-    const torneos = await Torneo.findAll({
-      order: [['fecha_inicio', 'ASC']]
+    // Obtener torneos activos y pasados
+    const torneosActivos = await Torneo.findAll({
+      where: {
+        estado: {
+          [Sequelize.Op.in]: ['activo', 'en progreso']
+        }
+      },  // Torneos activos y en proceso
+      order: [['fecha_inicio', 'DESC']],
     });
 
-    res.json({ torneos });
+    const torneosFinalizados = await Torneo.findAll({
+      where: { estado: 'cerrado' },  // Torneos finalizados
+      order: [['fecha_fin', 'DESC']],
+      limit: 2,  // Últimos dos torneos finalizados
+    });
+
+    res.json({
+      torneosActivos,
+      torneosFinalizados,
+    });
   } catch (error) {
     console.log(error);
     res.status(500).json({ mensaje: 'Error al listar los torneos' });
@@ -109,40 +161,53 @@ exports.listarTorneos = async (req, res) => {
 };
 
 
-// Inscribirse a un torneo
+
+// Toggle para inscribirse al torneo o anular inscripcion 
 exports.inscribirseATorneo = async (req, res) => {
   try {
     const torneoId = req.params.id;
     const usuarioId = req.usuario.id;
 
-    // Verificar si el torneo existe y está activo o en progreso
+    // Verificar si el torneo existe y está activo
     const torneo = await Torneo.findByPk(torneoId);
     if (!torneo) {
       return res.status(404).json({ mensaje: 'Torneo no encontrado' });
     }
+
+    // Verificar si el torneo está activo o en progreso
     if (!['activo'].includes(torneo.estado)) {
-      return res.status(400).json({ mensaje: 'Las inscripciones estan cerradas' });
+      return res.status(400).json({ mensaje: 'Las inscripciones están cerradas' });
     }
 
-    // Verificar si ya está inscrito
-    const yaInscripto = await Inscripciones.findOne({ where: { usuarioId, torneoId } });
-    if (yaInscripto) {
-      return res.status(400).json({ mensaje: 'Ya estás inscripto en este torneo' });
+    // Buscar inscripción existente
+    const inscripcion = await Inscripciones.findOne({ where: { usuarioId, torneoId } });
+
+    if (inscripcion) {
+      // Si ya está inscrito, eliminar la inscripción
+      await inscripcion.destroy();
+
+      // Actualizar contador de participantes
+      torneo.participantes -= 1;
+      await torneo.save();
+
+      res.json({ mensaje: 'Inscripción anulada exitosamente' });
+    } else {
+      // Si no está inscrito, realizar la inscripción
+      await Inscripciones.create({ usuarioId, torneoId });
+
+      // Actualizar contador de participantes
+      torneo.participantes += 1;
+      await torneo.save();
+
+      res.json({ mensaje: 'Inscripción exitosa al torneo' });
     }
 
-    // Registrar inscripción
-    await Inscripciones.create({ usuarioId, torneoId });
-
-    // Actualizar contador de participantes
-    torneo.participantes += 1;
-    await torneo.save();
-
-    res.json({ mensaje: 'Inscripción exitosa al torneo' });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ mensaje: 'Hubo un error al inscribirse al torneo' });
+    res.status(500).json({ mensaje: 'Hubo un error al gestionar la inscripción' });
   }
 };
+
 
 //Listar participantes del torneo
 exports.listarParticipantes = async (req, res) => {
