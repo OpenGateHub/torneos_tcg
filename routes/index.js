@@ -30,6 +30,10 @@ module.exports = function(){
 
   //Confirmar cuenta
   router.get('/confirmar-cuenta/:token', usuariosController.confirmarCuenta)
+  //Recuperar contraseña
+  router.post('/recuperar-password', usuariosController.solicitarTokenRecuperacion)
+  //Recuperar contraseña
+  router.put('/restablecer-password/:token', usuariosController.restablecerPassword)
 
   // Ver perfil del usuario autenticado
 router.get('/perfil', auth, usuariosController.obtenerPerfil);
@@ -52,7 +56,7 @@ router.get('/perfil', auth, usuariosController.obtenerPerfil);
   router.delete('/admin/usuarios/:id', auth, verificarAdmin(['admin']), adminController.eliminarUsuario);
   router.put('/admin/usuarios/:id/rol', auth, verificarAdmin(['admin']), adminController.cambiarRol);
 
-  // Gestión de torneos TODO!
+  // Gestión de torneos
   router.post('/admin/torneos', auth, verificarAdmin(['admin']), torneosController.crearTorneo);
   router.get('/admin/torneos', auth, verificarAdmin(['admin']), torneosController.listarTorneos);
   router.get('/admin/torneos/:id', auth, verificarAdmin(['admin']), torneosController.obtenerTorneo);
@@ -79,7 +83,7 @@ router.get('/perfil', auth, usuariosController.obtenerPerfil);
   router.post('/admin/torneos/:torneoId/generarEnfrentamientos',auth, verificarAdmin(['admin']), enfrentamientosController.generarPrimerEnfrentamiento);
   //registra los resultados de los enfrentamientos
   router.post('/admin/torneos/:torneoId/resultados',auth, verificarAdmin(['admin']), enfrentamientosController.registrarResultados);
-  //genera la siguiente ronda de enfrentamientos //TODO unificar el registro de resultados con la generacion de la siguiente ronda.
+  //genera la siguiente ronda de enfrentamientos s
   router.post('/admin/torneos/:torneoId/siguiente-ronda',auth, verificarAdmin(['admin']), enfrentamientosController.generarSiguienteRonda);
 
 

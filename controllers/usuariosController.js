@@ -1,7 +1,6 @@
 const Usuarios = require('../models/Usuarios.js');
 const { validationResult } = require('express-validator');
 const jwt = require('jsonwebtoken');
-const bcrypt = require('bcrypt');
 const crypto = require('crypto');
 const { Op } = require('sequelize');
 const enviarEmail = require('../helpers/email.js'); 
@@ -25,7 +24,7 @@ exports.crearCuenta = async (req,res) =>{
     await usuario.save();
     
     //Enviar mail de confirmacion
-    const urlConfirmacion = `${process.env.URL_BACKEND}confirmar-cuenta/${usuario.token}`;
+    const urlConfirmacion = `${process.env.URL_FRONTEND}/confirmar-cuenta/${usuario.token}`;
     
     await enviarEmail({
       email: usuario.email,
@@ -39,7 +38,7 @@ exports.crearCuenta = async (req,res) =>{
     res.status(500).json({mensaje:'Hubo un error',error})
   }
 }
-
+// Confirma la cuenta y elimina el token
 exports.confirmarCuenta = async (req, res) => {
   const usuario = await Usuarios.findOne({
     where: {
@@ -58,6 +57,87 @@ exports.confirmarCuenta = async (req, res) => {
   await usuario.save();
 
   res.json({ mensaje: 'Cuenta confirmada correctamente' });
+};
+
+// Solicitar Token de Recuperación de Contraseña
+exports.solicitarTokenRecuperacion = async (req, res) => {
+  // Validar errores de express-validator
+  const errores = validationResult(req);
+  if (!errores.isEmpty()) {
+    return res.status(400).json({ errores: errores.array() });
+  }
+
+  const { email } = req.body;
+
+  try {
+    // Buscar el usuario con el email proporcionado
+    const usuario = await Usuarios.findOne({ where: { email } });
+
+    if (!usuario) {
+      return res.status(404).json({ mensaje: 'Usuario no encontrado' });
+    }
+
+    // Generar token de recuperación
+    const token = crypto.randomBytes(20).toString('hex');
+    const expiraToken = Date.now() + 3600000; // El token expira en 1 hora
+
+    // Guardar el token y su fecha de expiración en el usuario
+    usuario.token = token;
+    usuario.expiraToken = expiraToken;
+    await usuario.save();
+
+    // Enviar el email con el enlace de recuperación
+    const urlRecuperacion = `${process.env.URL_FRONTEND}/restablecer-password/${token}`;
+    
+    await enviarEmail({
+      email: usuario.email,
+      asunto: "Recupera tu contraseña en Torneos TCG",
+      mensaje: `Para recuperar tu contraseña, ingresa al siguiente enlace: \n ${urlRecuperacion}`
+    });
+
+    res.json({ mensaje: 'Revisa tu correo para continuar con la recuperación de la contraseña.' });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ mensaje: 'Hubo un error al procesar la solicitud', error });
+  }
+};
+
+
+// Endpoint para cambiar la contraseña
+exports.restablecerPassword = async (req, res) => {
+  const { token } = req.params; 
+  const { nuevaPassword } = req.body;
+
+  // Validar que la contraseña tenga al menos 8 caracteres
+  if (nuevaPassword.length < 8) {
+    return res.status(400).json({ mensaje: 'La contraseña debe tener al menos 8 caracteres.' });
+  }
+
+  try {
+    // Buscar al usuario que tiene ese token
+    const usuario = await Usuarios.findOne({
+      where: {
+        token,
+        expiraToken: { [Op.gt]: Date.now() }
+      }
+    });
+
+    if (!usuario) {
+      return res.status(400).json({ mensaje: 'Token inválido o expirado' });
+    }
+
+
+    // Actualizar la contraseña y limpiar el token
+    usuario.password = nuevaPassword;
+    usuario.token = null;
+    usuario.expiraToken = null;
+    await usuario.save();
+
+    res.json({ mensaje: 'Contraseña actualizada exitosamente.' });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ mensaje: 'Hubo un error al restablecer la contraseña', error });
+  }
 };
 
 exports.obtenerPerfil = async (req, res) => {

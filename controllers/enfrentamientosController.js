@@ -7,7 +7,7 @@ const Torneo = require('../models/Torneo');
 exports.generarPrimerEnfrentamiento = async (req, res) => {
   const { torneoId } = req.params;
 
-  //TODO: agregar logica para que no se pueda generar el primer enfrentamiento sin que las inscripciones esten cerradas
+
 
   try {
     // Verificar que las inscripciones están cerradas

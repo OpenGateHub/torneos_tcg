@@ -74,6 +74,5 @@ exports.eliminarUsuario = async (req,res) =>{
   }
 }
 
-//TODO paginacion de usuarios, filtros de usuario, buscar usuario
 
 
