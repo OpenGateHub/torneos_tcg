@@ -18,7 +18,7 @@ const Enfrentamientos = db.define('Enfrentamientos', {
   },
   jugador2Id: {
     type: Sequelize.DataTypes.INTEGER,
-    allowNull: false
+    allowNull: true
   },
   ronda: {
     type: Sequelize.DataTypes.INTEGER,

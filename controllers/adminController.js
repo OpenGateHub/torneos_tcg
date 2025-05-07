@@ -1,8 +1,6 @@
 const Usuarios = require('../models/Usuarios.js');
 const { validationResult } = require('express-validator');
 const jwt = require('jsonwebtoken');
-const bcrypt = require('bcrypt');
-const crypto = require('crypto');
 const { Op } = require('sequelize');
 const enviarEmail = require('../helpers/email.js'); 
 
@@ -15,17 +13,20 @@ exports.chequearPermisos = (req, res) => {
 exports.listarUsuarios = async (req, res) => {
   try {
     const usuarios = await Usuarios.findAll({
-      attributes:{ excludes:['password', 'token', 'expiraToken']}
+      attributes:{ exclude:['password', 'token', 'expiraToken']}
     });
     res.json(usuarios);
   } catch (error) {
+    console.log(error);
     res.status(500).json({ mensaje: 'Error al obtener los usuarios' });
   }
 };
 
 exports.verUsuario = async (req, res) => {
   try {
-    const usuario = await Usuarios.findByPk(req.params.id);
+    const usuario = await Usuarios.findByPk(req.params.id,{
+      attributes:{ exclude:['password', 'token', 'expiraToken']}
+    });
 
     if(!usuario){
       return res.json({mensaje:"Usuario no encontrado en la base de datos"})
@@ -73,6 +74,5 @@ exports.eliminarUsuario = async (req,res) =>{
   }
 }
 
-//TODO paginacion de usuarios, filtros de usuario, buscar usuario
 
 

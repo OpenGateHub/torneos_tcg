@@ -7,35 +7,57 @@ const Torneo = require('../models/Torneo');
 exports.generarPrimerEnfrentamiento = async (req, res) => {
   const { torneoId } = req.params;
 
+
+
   try {
-    //Obtener todos los jugadores inscritos en el torneo
-    const inscripciones = await Inscripciones.findAll({
+    // Verificar que las inscripciones están cerradas
+    const torneo = await Torneo.findByPk(torneoId);
+    if (!torneo || !torneo.estado === 'activo') {
+      return res.status(400).json({ mensaje: 'Las inscripciones deben estar cerradas para generar el primer enfrentamiento' });
+    }
+
+    // Obtener todos los jugadores inscritos en el torneo
+    let inscripciones = await Inscripciones.findAll({
       where: { torneoId },
-      include: ['Usuario'] 
+      include: ['usuario']
     });
 
-    //Mezclar los jugadores aleatoriamente (usando Fisher-Yates)
-    const jugadores = inscripciones.map(inscripcion => inscripcion.usuarioId);
+    // Mezclar los jugadores aleatoriamente (Fisher-Yates)
+    let jugadores = inscripciones.map(inscripcion => inscripcion.usuarioId);
     for (let i = jugadores.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
-      [jugadores[i], jugadores[j]] = [jugadores[j], jugadores[i]]; // Intercambio
+      [jugadores[i], jugadores[j]] = [jugadores[j], jugadores[i]];
     }
 
-    //Emparejar los jugadores
     const enfrentamientos = [];
-    for (let i = 0; i < jugadores.length; i += 2) {
-      //Si es impar, el último jugador no tiene oponente (puedes decidir qué hacer) TODO
-      if (jugadores[i + 1]) {
-        enfrentamientos.push({
-          torneoId,
-          jugador1Id: jugadores[i],
-          jugador2Id: jugadores[i + 1],
-          ronda: 1
-        });
-      }
+
+    // Si la cantidad de jugadores es impar, elegir uno para bye
+    if (jugadores.length % 2 !== 0) {
+      const randomIndex = Math.floor(Math.random() * jugadores.length);
+      const jugadorConBye = jugadores.splice(randomIndex, 1)[0]; // lo quitamos del array
+
+      // Crear enfrentamiento de bye
+      enfrentamientos.push({
+        torneoId,
+        jugador1Id: jugadorConBye,
+        jugador2Id: null,
+        ganadorId: null,
+        ronda: 1,
+        finalizado: true
+      });
     }
 
-    //Crear los enfrentamientos en la base de datos
+    // Emparejar el resto de los jugadores de a pares
+    for (let i = 0; i < jugadores.length; i += 2) {
+      enfrentamientos.push({
+        torneoId,
+        jugador1Id: jugadores[i],
+        jugador2Id: jugadores[i + 1],
+        ronda: 1
+      });
+    }
+
+    // Crear los enfrentamientos en la base de datos
     await Enfrentamientos.bulkCreate(enfrentamientos);
 
     res.json({ mensaje: 'Primeros enfrentamientos generados' });
@@ -46,6 +68,7 @@ exports.generarPrimerEnfrentamiento = async (req, res) => {
 };
 
 
+//Registrar Resultados de los enfrentamientos
 exports.registrarResultados = async (req, res) => {
   const torneoId = parseInt(req.params.torneoId);
   const resultados = req.body.resultados;
@@ -60,18 +83,39 @@ exports.registrarResultados = async (req, res) => {
     for (const resultado of resultados) {
       const { enfrentamientoId, ganadorId, empate = false } = resultado;
 
+      // Buscar el enfrentamiento correspondiente al id y torneo
       const enfrentamiento = await Enfrentamientos.findOne({ where: { id: enfrentamientoId, torneoId } });
 
       if (!enfrentamiento) {
-        resultadosProcesados.push({ enfrentamientoId, estado: 'error', mensaje: 'Enfrentamiento no encontrado en este torneo' });
+        resultadosProcesados.push({
+          enfrentamientoId,
+          estado: 'error',
+          mensaje: 'Enfrentamiento no encontrado en este torneo'
+        });
         continue;
       }
 
+      // Si el enfrentamiento es de bye, ya está procesado
+      if (enfrentamiento.jugador2Id === null) {
+        resultadosProcesados.push({
+          enfrentamientoId,
+          estado: 'ok',
+          mensaje: 'Enfrentamiento de bye, resultado ya asignado'
+        });
+        continue;
+      }
+
+      // Verificar si el enfrentamiento ya fue finalizado
       if (enfrentamiento.finalizado) {
-        resultadosProcesados.push({ enfrentamientoId, estado: 'error', mensaje: 'Ya finalizado' });
+        resultadosProcesados.push({
+          enfrentamientoId,
+          estado: 'error',
+          mensaje: 'Ya finalizado'
+        });
         continue;
       }
 
+      // Registrar resultado: si hay empate, el ganador queda en null
       enfrentamiento.ganadorId = empate ? null : ganadorId;
       enfrentamiento.finalizado = true;
       await enfrentamiento.save();
@@ -92,58 +136,113 @@ exports.registrarResultados = async (req, res) => {
 };
 
 
+
 //generar siguiente ronda
 exports.generarSiguienteRonda = async (req, res) => {
   const torneoId = parseInt(req.params.torneoId);
 
   try {
-    //Obtener los enfrentamientos ya finalizados para este torneo
+    // 1. Obtener todos los enfrentamientos previos finalizados
     const enfrentamientos = await Enfrentamientos.findAll({
       where: { torneoId, finalizado: true },
-      include: ['jugador1', 'jugador2'] 
+      attributes: ['jugador1Id', 'jugador2Id', 'ganadorId'],
     });
 
-    //Obtener las victorias de los jugadores
+    // 2. Construir un mapa de enfrentamientos previos
+    const enfrentamientosPrevios = new Set();
     const victorias = {};
-    
-    
-    //Contabilizar las victorias
-    for (const enfrentamiento of enfrentamientos) {
-      if (enfrentamiento.ganadorId) {
-        victorias[enfrentamiento.ganadorId] = (victorias[enfrentamiento.ganadorId] || 0) + 1;
+    const jugadoresConBye = {};
+
+    for (const enf of enfrentamientos) {
+      const j1 = enf.jugador1Id;
+      const j2 = enf.jugador2Id;
+
+      if (j1 && j2) {
+        // Guardar combinación ordenada para evitar duplicados tipo (A,B) y (B,A)
+        const key = [j1, j2].sort().join('-');
+        enfrentamientosPrevios.add(key);
+      }
+
+      if (enf.ganadorId) {
+        victorias[enf.ganadorId] = (victorias[enf.ganadorId] || 0) + 1;
+      }
+
+      if (j1 && !j2) {
+        jugadoresConBye[j1] = true;
       }
     }
-    
-    //Obtener los jugadores inscritos y ordenarlos por número de victorias
+
+    // 3. Obtener inscripciones ordenadas por victorias
     const jugadores = await Inscripciones.findAll({
       where: { torneoId },
       include: [{ model: Usuarios, as: 'usuario' }]
     });
-    
+
     jugadores.sort((a, b) => {
       const victoriasA = victorias[a.usuarioId] || 0;
       const victoriasB = victorias[b.usuarioId] || 0;
-      return victoriasB - victoriasA; // Ordenar de mayor a menor victorias
+      return victoriasB - victoriasA;
     });
 
-    // Obtener la última ronda jugada
     const ultimaRonda = await Enfrentamientos.max('ronda', { where: { torneoId } });
     const siguienteRonda = (ultimaRonda || 0) + 1;
-    
-    //Emparejar jugadores de acuerdo a las victorias
+
     const nuevosEnfrentamientos = [];
-    for (let i = 0; i < jugadores.length; i += 2) {
-      if (jugadores[i + 1]) {
-        nuevosEnfrentamientos.push({
-          torneoId,
-          jugador1Id: jugadores[i].usuarioId,
-          jugador2Id: jugadores[i + 1].usuarioId,
-          ronda: siguienteRonda // Ronda 2 o siguiente ronda
-        });
+    let jugadoresRestantes = [...jugadores];
+
+    // 4. Asignar bye si la cantidad es impar
+    if (jugadoresRestantes.length % 2 !== 0) {
+      for (let i = jugadoresRestantes.length - 1; i >= 0; i--) {
+        const jugador = jugadoresRestantes[i];
+        if (!jugadoresConBye[jugador.usuarioId]) {
+          nuevosEnfrentamientos.push({
+            torneoId,
+            jugador1Id: jugador.usuarioId,
+            jugador2Id: null,
+            ganadorId: null,
+            ronda: siguienteRonda,
+            finalizado: true
+          });
+          jugadoresRestantes.splice(i, 1);
+          break;
+        }
       }
     }
-    
-    //Crear los enfrentamientos en la base de datos para la siguiente ronda
+
+    // 5. Emparejar evitando repeticiones
+    const usados = new Set();
+
+    for (let i = 0; i < jugadoresRestantes.length; i++) {
+      const jugadorA = jugadoresRestantes[i];
+      if (usados.has(jugadorA.usuarioId)) continue;
+
+      let emparejado = false;
+
+      for (let j = i + 1; j < jugadoresRestantes.length; j++) {
+        const jugadorB = jugadoresRestantes[j];
+        if (usados.has(jugadorB.usuarioId)) continue;
+
+        const key = [jugadorA.usuarioId, jugadorB.usuarioId].sort().join('-');
+
+        if (!enfrentamientosPrevios.has(key)) {
+          nuevosEnfrentamientos.push({
+            torneoId,
+            jugador1Id: jugadorA.usuarioId,
+            jugador2Id: jugadorB.usuarioId,
+            ronda: siguienteRonda
+          });
+          usados.add(jugadorA.usuarioId);
+          usados.add(jugadorB.usuarioId);
+          emparejado = true;
+          break;
+        }
+      }
+
+      if (!emparejado) {
+        console.warn(`No se pudo emparejar a ${jugadorA.usuario.nombre} sin repetir enfrentamiento`);
+      }
+    }
+
     await Enfrentamientos.bulkCreate(nuevosEnfrentamientos);
 
     res.json({ mensaje: 'Siguiente ronda generada' });
@@ -152,6 +251,8 @@ exports.generarSiguienteRonda = async (req, res) => {
     res.status(500).json({ mensaje: 'Hubo un error al generar la siguiente ronda' });
   }
 };
+
+
 
 // Listar enfrentamientos por ronda
 // GET /admin/torneos/:id/enfrentamientos/:ronda
@@ -246,6 +347,3 @@ exports.listarEnfrentamientosAgrupados = async (req, res) => {
 
 
 
-
-
-/// PARA MAÑANA 24/04 Testear todo lo que tenemos hasta ahora, si sale bien quizas se pueda inicial el front

@@ -1,13 +1,1 @@
-require('dotenv').config({path:'variables.env'});
-new Sequelize('torneo',process.env.DB_USER,process.env.DB_PASSWORD,{
-    host: process.env.DB_HOST,
-    port: process.env.DB_PORT,
-    dialect: 'postgres',
-    pool: {
-        max: 5,
-        min: 0,
-        acquire: 30000,
-        idle: 10000
-    },
-    logging: false
-})
+ mañana 25/04 voy a chequear que todo el backend este listo y optimizar codigo y ver de hacer paginacion de los usuarios de la pagina, quizas un buscador de usuarios por nombre y por email, ver si alguna ruta o campo mas necesita validaciones en los controladores, etc. el lunes quizás podria arrancar el frontend
