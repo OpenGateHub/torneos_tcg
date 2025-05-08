@@ -21,9 +21,22 @@ db.sync().then(()=> console.log("DB conectada")).catch((error)=> console.log(err
 //Creacion de la App
 const app = express();
 
+
+
 // Configurar CORS
+const whitelist = [
+  process.env.URL_FRONTEND,
+  'http://localhost:5173'
+];
+
 app.use(cors({
-  origin: process.env.URL_FRONTEND, 
+  origin: function (origin, callback) {
+    if (!origin || whitelist.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error('No permitido por CORS'));
+    }
+  },
   credentials: true
 }));
 
