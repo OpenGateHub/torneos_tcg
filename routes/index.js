@@ -30,6 +30,8 @@ module.exports = function(){
 
   //Confirmar cuenta
   router.get('/confirmar-cuenta/:token', usuariosController.confirmarCuenta)
+  // reenviar token de confirmacion
+  router.post('/reenviar-confirmacion', usuariosController.reenviarConfirmacion);
   //Recuperar contraseña
   router.post('/recuperar-password', usuariosController.solicitarTokenRecuperacion)
   //Recuperar contraseña

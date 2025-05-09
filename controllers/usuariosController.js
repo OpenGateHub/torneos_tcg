@@ -48,7 +48,11 @@ exports.confirmarCuenta = async (req, res) => {
   });
 
   if (!usuario) {
-    return res.status(400).json({ mensaje: 'Token inválido o expirado' });
+    return res.status(400).json({ok:false,  mensaje: 'Token inválido o expirado' });
+  }
+
+  if (usuario.activo){
+    return res.status(400).json({ok:false, mensaje: "Cuenta ya confirmada"})
   }
 
   usuario.token = null;
@@ -56,7 +60,7 @@ exports.confirmarCuenta = async (req, res) => {
   usuario.activo = 1; 
   await usuario.save();
 
-  res.json({ mensaje: 'Cuenta confirmada correctamente' });
+  res.json({ok:true, mensaje: 'Cuenta confirmada correctamente' });
 };
 
 // Solicitar Token de Recuperación de Contraseña
@@ -100,6 +104,25 @@ exports.solicitarTokenRecuperacion = async (req, res) => {
     console.log(error);
     res.status(500).json({ mensaje: 'Hubo un error al procesar la solicitud', error });
   }
+};
+
+exports.reenviarConfirmacion = async (req, res) => {
+  const { token } = req.body;
+
+  const usuario = await Usuarios.findOne({ where: { tokenConfirmacion: token } });
+
+  if (!usuario) {
+    return res.status(400).json({ mensaje: 'Token inválido o cuenta ya confirmada' });
+  }
+
+  // reenviás el mismo mail (o podés generar uno nuevo)
+  await enviarEmail({
+    email: usuario.email,
+    asunto: 'Confirma tu cuenta',
+    mensaje: `Click en este enlace para confirmar: ${process.env.FRONTEND_URL}/confirmar-cuenta/${usuario.tokenConfirmacion}`
+  });
+
+  res.json({ mensaje: 'Correo reenviado con éxito' });
 };
 
 
