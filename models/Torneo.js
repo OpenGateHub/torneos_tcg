@@ -35,6 +35,17 @@ const Torneo = db.define('Torneo', {
       }
     }
   },
+  tipo: {
+    type: Sequelize.DataTypes.STRING,
+    allowNull: false,
+    defaultValue: 'casual',
+    validate: {
+      isIn: {
+        args: [['casual', 'suizo', 'otro']],
+        msg: 'El tipo debe ser "casual", "suizo" o "otro"'
+      }
+    }
+  },
   estado: {
     type: Sequelize.DataTypes.STRING,
     allowNull: false,
@@ -51,6 +62,11 @@ const Torneo = db.define('Torneo', {
     allowNull: true
   },
   participantes: {
+    type: Sequelize.DataTypes.INTEGER,
+    allowNull: true,
+    defaultValue: 0
+  },
+  playoff: {
     type: Sequelize.DataTypes.INTEGER,
     allowNull: true,
     defaultValue: 0

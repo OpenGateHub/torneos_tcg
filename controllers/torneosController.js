@@ -87,13 +87,15 @@ exports.actualizarTorneo = async (req, res) => {
     }
 
     // Obtener los campos que se desean actualizar
-    const { nombre, fecha_inicio, fecha_fin, estado, descripcion, participantes, cerrarInscripciones } = req.body;
+    const { nombre, fecha_inicio, fecha_fin, estado, tipo, playoff, descripcion, participantes, cerrarInscripciones } = req.body;
 
     // Actualizar los valores del torneo
     torneo.nombre = nombre || torneo.nombre;
     torneo.fecha_inicio = fecha_inicio || torneo.fecha_inicio;
     torneo.fecha_fin = fecha_fin || torneo.fecha_fin;
     torneo.estado = estado || torneo.estado;
+    torneo.tipo = tipo || torneo.tipo;
+    torneo.playoff = playoff || torneo.playoff;
     torneo.descripcion = descripcion || torneo.descripcion;
     torneo.participantes = participantes || torneo.participantes;
 
