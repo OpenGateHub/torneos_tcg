@@ -148,7 +148,7 @@ exports.generarSiguienteRonda = async (req, res) => {
       attributes: ['jugador1Id', 'jugador2Id', 'ganadorId'],
     });
 
-    // 2. Construir un mapa de enfrentamientos previos
+    // 2. Construir un mapa de enfrentamientos previos y conteo de victorias
     const enfrentamientosPrevios = new Set();
     const victorias = {};
     const jugadoresConBye = {};
@@ -158,7 +158,6 @@ exports.generarSiguienteRonda = async (req, res) => {
       const j2 = enf.jugador2Id;
 
       if (j1 && j2) {
-        // Guardar combinación ordenada para evitar duplicados tipo (A,B) y (B,A)
         const key = [j1, j2].sort().join('-');
         enfrentamientosPrevios.add(key);
       }
@@ -167,12 +166,13 @@ exports.generarSiguienteRonda = async (req, res) => {
         victorias[enf.ganadorId] = (victorias[enf.ganadorId] || 0) + 1;
       }
 
+      // Registrar jugadores que ya tuvieron bye
       if (j1 && !j2) {
         jugadoresConBye[j1] = true;
       }
     }
 
-    // 3. Obtener inscripciones ordenadas por victorias
+    // 3. Obtener inscripciones ordenadas por victorias (ranking)
     const jugadores = await Inscripciones.findAll({
       where: { torneoId },
       include: [{ model: Usuarios, as: 'usuario' }]
@@ -190,8 +190,9 @@ exports.generarSiguienteRonda = async (req, res) => {
     const nuevosEnfrentamientos = [];
     let jugadoresRestantes = [...jugadores];
 
-    // 4. Asignar bye si la cantidad es impar
+    // 4. Si hay cantidad impar, asignar bye al último jugador sin bye previo
     if (jugadoresRestantes.length % 2 !== 0) {
+      // Buscar desde el último jugador hacia arriba al primer jugador sin bye
       for (let i = jugadoresRestantes.length - 1; i >= 0; i--) {
         const jugador = jugadoresRestantes[i];
         if (!jugadoresConBye[jugador.usuarioId]) {
@@ -209,37 +210,47 @@ exports.generarSiguienteRonda = async (req, res) => {
       }
     }
 
-    // 5. Emparejar evitando repeticiones
-    const usados = new Set();
+    // 5. Emparejar el resto de jugadores
+    while (jugadoresRestantes.length > 0) {
+      const jugadorA = jugadoresRestantes.shift(); // Tomar el primer jugador
+      let mejorEmparejamiento = null;
+      let mejorIndice = -1;
+      let menorRepeticiones = Infinity;
 
-    for (let i = 0; i < jugadoresRestantes.length; i++) {
-      const jugadorA = jugadoresRestantes[i];
-      if (usados.has(jugadorA.usuarioId)) continue;
-
-      let emparejado = false;
-
-      for (let j = i + 1; j < jugadoresRestantes.length; j++) {
-        const jugadorB = jugadoresRestantes[j];
-        if (usados.has(jugadorB.usuarioId)) continue;
-
+      // Buscar el mejor emparejamiento posible
+      for (let i = 0; i < jugadoresRestantes.length; i++) {
+        const jugadorB = jugadoresRestantes[i];
         const key = [jugadorA.usuarioId, jugadorB.usuarioId].sort().join('-');
+        const yaSeEnfrentaron = enfrentamientosPrevios.has(key);
 
-        if (!enfrentamientosPrevios.has(key)) {
-          nuevosEnfrentamientos.push({
-            torneoId,
-            jugador1Id: jugadorA.usuarioId,
-            jugador2Id: jugadorB.usuarioId,
-            ronda: siguienteRonda
-          });
-          usados.add(jugadorA.usuarioId);
-          usados.add(jugadorB.usuarioId);
-          emparejado = true;
+        // Si encontramos un oponente sin enfrentamiento previo, lo usamos inmediatamente
+        if (!yaSeEnfrentaron) {
+          mejorEmparejamiento = jugadorB;
+          mejorIndice = i;
           break;
+        }
+
+        // Si todos tienen enfrentamientos previos, elegimos el que tenga menos
+        const repeticiones = Array.from(enfrentamientosPrevios).filter(k => 
+          k.includes(jugadorA.usuarioId) && k.includes(jugadorB.usuarioId)
+        ).length;
+
+        if (repeticiones < menorRepeticiones) {
+          menorRepeticiones = repeticiones;
+          mejorEmparejamiento = jugadorB;
+          mejorIndice = i;
         }
       }
 
-      if (!emparejado) {
-        console.warn(`No se pudo emparejar a ${jugadorA.usuario.nombre} sin repetir enfrentamiento`);
+      // Si encontramos un emparejamiento (siempre deberíamos encontrar uno)
+      if (mejorEmparejamiento) {
+        nuevosEnfrentamientos.push({
+          torneoId,
+          jugador1Id: jugadorA.usuarioId,
+          jugador2Id: mejorEmparejamiento.usuarioId,
+          ronda: siguienteRonda
+        });
+        jugadoresRestantes.splice(mejorIndice, 1);
       }
     }
 

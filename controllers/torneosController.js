@@ -274,6 +274,31 @@ exports.obtenerRanking = async (req, res) => {
       where: { torneoId, finalizado: true }
     });
 
+    // Crear mapa de enfrentamientos directos
+    const enfrentamientosDirectos = new Map();
+    enfrentamientos.forEach(enf => {
+      if (enf.jugador2Id !== null) { // Ignorar byes
+        const key = [enf.jugador1Id, enf.jugador2Id].sort().join('-');
+        enfrentamientosDirectos.set(key, {
+          ganador: enf.ganadorId,
+          jugador1: enf.jugador1Id,
+          jugador2: enf.jugador2Id
+        });
+      }
+    });
+
+    // Crear mapa de victorias contra oponentes
+    const victoriasContraOponentes = new Map();
+    enfrentamientos.forEach(enf => {
+      if (enf.ganadorId && enf.jugador2Id !== null) {
+        if (!victoriasContraOponentes.has(enf.ganadorId)) {
+          victoriasContraOponentes.set(enf.ganadorId, new Set());
+        }
+        const perdedor = enf.ganadorId === enf.jugador1Id ? enf.jugador2Id : enf.jugador1Id;
+        victoriasContraOponentes.get(enf.ganadorId).add(perdedor);
+      }
+    });
+
     const ranking = inscripciones.map(inscripcion => {
       const usuarioId = inscripcion.usuarioId;
       const nombre = inscripcion.usuario.nombre;
@@ -314,11 +339,43 @@ exports.obtenerRanking = async (req, res) => {
       };
     });
 
-    // Ordenar por puntaje descendente. En caso de empate, menos derrotas primero
-    ranking.sort((a, b) =>
-      b.puntaje - a.puntaje ||
-      a.derrotas - b.derrotas
-    );
+    // Función para resolver empate entre dos jugadores
+    const resolverEmpate = (jugadorA, jugadorB) => {
+      // 1. Verificar enfrentamiento directo
+      const keyDirecto = [jugadorA.jugadorId, jugadorB.jugadorId].sort().join('-');
+      const enfrentamientoDirecto = enfrentamientosDirectos.get(keyDirecto);
+      
+      if (enfrentamientoDirecto) {
+        if (enfrentamientoDirecto.ganador === jugadorA.jugadorId) return -1;
+        if (enfrentamientoDirecto.ganador === jugadorB.jugadorId) return 1;
+      }
+
+      // 2. Si no hay enfrentamiento directo o fue empate, comparar rivales vencidos
+      const victoriasA = victoriasContraOponentes.get(jugadorA.jugadorId) || new Set();
+      const victoriasB = victoriasContraOponentes.get(jugadorB.jugadorId) || new Set();
+
+      // Calcular "fuerza" de los oponentes vencidos basado en su posición actual
+      let fuerzaA = 0;
+      let fuerzaB = 0;
+
+      ranking.forEach((jugador, index) => {
+        const posicionInversa = ranking.length - index; // Más puntos por vencer a mejor posicionados
+        if (victoriasA.has(jugador.jugadorId)) fuerzaA += posicionInversa;
+        if (victoriasB.has(jugador.jugadorId)) fuerzaB += posicionInversa;
+      });
+
+      return fuerzaB - fuerzaA;
+    };
+
+    // Ordenar el ranking con los criterios de desempate
+    ranking.sort((a, b) => {
+      // Primero por puntaje
+      const difPuntaje = b.puntaje - a.puntaje;
+      if (difPuntaje !== 0) return difPuntaje;
+
+      // Si hay empate, usar criterios de desempate
+      return resolverEmpate(a, b);
+    });
 
     res.json(ranking);
   } catch (error) {
