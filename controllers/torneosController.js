@@ -208,6 +208,32 @@ exports.inscribirseATorneo = async (req, res) => {
   }
 };
 
+//Inscribir a usuario
+exports.inscribirUsuario = async (req, res) => {
+  const { torneoId, usuarioId } = req.params;
+  const torneo = await Torneo.findByPk(torneoId);
+
+  try{
+    // Verificar si ya esta inscripto
+    const yaInscripto = await Inscripciones.findOne({ where: { torneoId, usuarioId } });
+
+    if (yaInscripto) {
+      return res.status(400).json({ mensaje: 'El usuario ya está inscripto en este torneo' });
+    }
+    if (torneo.estado !== 'activo') {
+      return res.status(400).json({ mensaje: 'No se pueden inscribir usuarios en un torneo que ya está en curso o cerrado' });
+    }
+
+    // Crear la inscripción
+    await Inscripciones.create({ torneoId, usuarioId });  
+    torneo.participantes += 1;
+    await torneo.save();
+    res.status(200).json({ mensaje: 'Usuario inscripto correctamente' });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ mensaje: 'Error al inscribir al usuario' });
+  }
+};
 
 //Listar participantes del torneo
 exports.listarParticipantes = async (req, res) => {

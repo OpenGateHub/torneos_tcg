@@ -29,7 +29,9 @@ exports.crearCuenta = async (req,res) =>{
     await enviarEmail({
       email: usuario.email,
       asunto: "Confirma tu cuenta en Torneos TCG",
-      mensaje: `Para confirmar tu cuenta ingresa al siguiente enlace: \n ${urlConfirmacion}`
+      mensaje: `Para confirmar tu cuenta ingresa al siguiente enlace: \n`,
+      nombreUsuario: usuario.nombre,
+      url: urlConfirmacion
     })
     res.json({mensaje:'Usuario creado. Revisa tu correo para confirmar la cuenta.'})
     
@@ -96,7 +98,9 @@ exports.solicitarTokenRecuperacion = async (req, res) => {
     await enviarEmail({
       email: usuario.email,
       asunto: "Recupera tu contraseña en Torneos TCG",
-      mensaje: `Para recuperar tu contraseña, ingresa al siguiente enlace: \n ${urlRecuperacion}`
+      mensaje: `Para recuperar tu contraseña, ingresa al siguiente enlace:`,
+      nombreUsuario: usuario.nombre,
+      url: urlRecuperacion
     });
 
     res.json({ mensaje: 'Revisa tu correo para continuar con la recuperación de la contraseña.' });

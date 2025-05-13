@@ -28,7 +28,7 @@ const Torneo = db.define('Torneo', {
   },
   fecha_fin: {
     type: Sequelize.DataTypes.DATE,
-    allowNull: false,
+    allowNull: true,
     validate: {
       isDate: {
         msg: 'Debe ingresar una fecha de finalización válida'

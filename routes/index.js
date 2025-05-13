@@ -73,6 +73,8 @@ router.get('/perfil', auth, usuariosController.obtenerPerfil);
   router.get('/torneos/:id',authOpcional, torneosController.obtenerTorneo); 
   //Inscripciones a torneo
   router.post('/torneos/:id/inscribirse', auth, torneosController.inscribirseATorneo);
+  //Inscribir a usuario via admin 
+  router.post('/torneos/:torneoId/inscribir-usuario/:usuarioId', auth, verificarAdmin(['admin']), torneosController.inscribirUsuario);
   //mostrar el ranking del torneo
   router.get('/torneos/:torneoId/ranking', torneosController.obtenerRanking);
 
