@@ -135,6 +135,52 @@ exports.registrarResultados = async (req, res) => {
   }
 };
 
+//Registrar Resultado Individual de un enfrentamiento
+exports.registrarResultadoIndividual = async (req, res) => {
+  const torneoId = parseInt(req.params.torneoId);
+  const enfrentamientoId = parseInt(req.params.enfrentamientoId);
+  const { ganadorId, empate = false } = req.body;
+
+  try {
+    // Buscar el enfrentamiento correspondiente al id y torneo
+    const enfrentamiento = await Enfrentamientos.findOne({ 
+      where: { id: enfrentamientoId, torneoId } 
+    });
+
+    if (!enfrentamiento) {
+      return res.status(404).json({ 
+        mensaje: 'Enfrentamiento no encontrado en este torneo' 
+      });
+    }
+
+    // Si el enfrentamiento es de bye, ya está procesado
+    if (enfrentamiento.jugador2Id === null) {
+      return res.json({ 
+        mensaje: 'Enfrentamiento de bye ya procesado',
+        enfrentamientoId,
+        esBye: true
+      });
+    }
+
+    // Registrar resultado: si hay empate, el ganador queda en null
+    enfrentamiento.ganadorId = empate ? null : ganadorId;
+    enfrentamiento.finalizado = true;
+    await enfrentamiento.save();
+
+    res.json({ 
+      mensaje: 'Resultado guardado correctamente',
+      enfrentamientoId,
+      ganadorId: empate ? null : ganadorId,
+      empate,
+      finalizado: true
+    });
+
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ mensaje: 'Error interno al guardar resultado' });
+  }
+};
+
 
 
 //generar siguiente ronda

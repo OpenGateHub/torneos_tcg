@@ -87,6 +87,8 @@ router.get('/perfil', auth, usuariosController.obtenerPerfil);
   router.post('/admin/torneos/:torneoId/generarEnfrentamientos',auth, verificarAdmin(['admin']), enfrentamientosController.generarPrimerEnfrentamiento);
   //registra los resultados de los enfrentamientos
   router.post('/admin/torneos/:torneoId/resultados',auth, verificarAdmin(['admin']), enfrentamientosController.registrarResultados);
+  //registra los resultados de los enfrentamientos
+  router.post('/admin/torneos/:torneoId/enfrentamientos/:enfrentamientoId/resultado',auth, verificarAdmin(['admin']), enfrentamientosController.registrarResultadoIndividual);
   //genera la siguiente ronda de enfrentamientos s
   router.post('/admin/torneos/:torneoId/siguiente-ronda',auth, verificarAdmin(['admin']), enfrentamientosController.generarSiguienteRonda);
 
