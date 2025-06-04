@@ -16,7 +16,15 @@ Torneo.associate(db.models);
 Enfrentamientos.associate(db.models)
 
 // Inscripciones.associate(db.models);
-db.sync().then(()=> console.log("DB conectada")).catch((error)=> console.log(error))
+// ⚠️ Solo para desarrollo
+db.sync({ force: true })
+  .then(() => {
+    console.log("DB sincronizada (¡tablas borradas y recreadas!)");
+  })
+  .catch((error) => {
+    console.error("Error al sincronizar la DB:", error);
+  });
+
 
 //Creacion de la App
 const app = express();
