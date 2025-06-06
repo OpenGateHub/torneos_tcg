@@ -49,5 +49,5 @@ app.use('/', router())
 
 // Puerto del servidor
 app.listen(process.env.PORT, ()=>{
-  console.log("Servidor funcionando");
+  console.log(`Server running on http://localhost:${process.env.PORT}`);
 })
