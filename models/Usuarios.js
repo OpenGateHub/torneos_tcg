@@ -28,6 +28,32 @@ const Usuarios = db.define('Usuarios', {
       }
     }
   },
+  last_name: {
+    type: Sequelize.DataTypes.STRING,
+    allowNull: true,
+    validate: {
+      len: {
+        args: [3,50],
+        msg: 'El apellido debe tener entre 3 y 50 caracteres'
+      }
+    }
+  },
+  birthdate: {
+    type: Sequelize.DataTypes.DATE,
+    allowNull:true
+  },
+  provincia : {
+    type: Sequelize.DataTypes.STRING,
+    allowNull: true
+  },
+  city: {
+    type: Sequelize.DataTypes.STRING,
+    allowNull: true
+  },
+  dni: {
+    type: Sequelize.DataTypes.STRING,
+    allowNull: true
+  },
   password: {
     type: Sequelize.DataTypes.STRING,
     allowNull: false,
@@ -61,7 +87,17 @@ const Usuarios = db.define('Usuarios', {
     type: Sequelize.DataTypes.BOOLEAN,
     allowNull: false,
     defaultValue: false
-  }
+  },
+  verified: {
+    type: Sequelize.DataTypes.BOOLEAN,
+    allowNull: false,
+    defaultValue: false
+  },
+  bio: {
+    type: Sequelize.DataTypes.STRING,
+    allowNull: true
+  },
+
     // passwordFuerte: {
     //     type: Sequelize.DataTypes.STRING,
     //     allowNull: false,

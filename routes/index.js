@@ -5,7 +5,7 @@ const { body } = require('express-validator');
 //Middlewares
 const auth = require('../middleware/auth');
 const verificarAdmin = require('../middleware/verificarAdmin')
-const authOpcional = require('../middleware/authOpcional');
+// const authOpcional = require('../middleware/authOpcional');
 
 //Controllers
 const usuariosController = require('../controllers/usuariosController');
@@ -15,6 +15,8 @@ const enfrentamientosController = require('../controllers/enfrentamientosControl
 
 // routes
 const torneosRoutes = require('./torneo.routes')
+const leaguesRoutes = require('./leagues.routes')
+const usersRoutes = require('./users.routes')
 
 module.exports = function(){
   //Index
@@ -24,6 +26,8 @@ module.exports = function(){
 
 
   router.use(torneosRoutes)
+  router.use(leaguesRoutes)
+  router.use(usersRoutes)
   
   /** USUARIOS */
   //Crear Usuario

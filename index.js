@@ -26,13 +26,11 @@ Ligas.associate(db.models)
 // Inscripciones.associate(db.models);
 // force true only development, i need implement de migration system
 db.sync({
-  force: true
+  alter: true
 }).then(()=> console.log("DB conectada".green)).catch((error)=> console.log(error))
 
 //Creacion de la App
 const app = express();
-
-
 
 // Configurar CORS
 const whitelist = [
