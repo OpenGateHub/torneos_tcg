@@ -78,11 +78,6 @@ router.get('/perfil', auth, usuariosController.obtenerPerfil);
   //genera la siguiente ronda de enfrentamientos s
   router.post('/admin/torneos/:torneoId/siguiente-ronda',auth, verificarAdmin(['admin']), enfrentamientosController.generarSiguienteRonda);
 
-
-
-
-
-
   /** AUTH */
   //Login
   router.post('/login', authController.autenticarUsuario )

@@ -102,6 +102,13 @@ Usuarios.associate = models => {
     otherKey: 'torneoId',
     as: 'Torneos'
   });
+
+  Usuarios.belongsToMany(models.Company, {
+    through: models.UserCompany,
+    foreignKey: 'user',
+    otherKey: 'company',
+    as: 'companies',
+  });
 };
 
 
