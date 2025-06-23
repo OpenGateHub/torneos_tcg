@@ -96,7 +96,8 @@ class UserController {
                 birthdate,
                 provincia,
                 city,
-                bio
+                bio,
+                dni,
             } = req.body;
 
             const user = await Usuarios.findByPk(id);
@@ -111,7 +112,8 @@ class UserController {
                 birthdate,
                 provincia,
                 city,
-                bio
+                bio,
+                dni
             });
 
             // Excluir datos sensibles en la respuesta

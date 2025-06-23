@@ -172,7 +172,7 @@ exports.restablecerPassword = async (req, res) => {
 exports.obtenerPerfil = async (req, res) => {
   try {
     const usuario = await Usuarios.findByPk(req.usuario.id, {
-      attributes: ['id', 'nombre', 'last_name', 'email', 'rol', 'birthdate', 'provincia', 'dni', 'bio', 'createdAt']
+      attributes: ['id', 'nombre', 'last_name', 'email', 'rol', 'birthdate', 'provincia', 'dni', 'bio', 'dni', 'createdAt']
     });
 
     const user_company = await UserCompany.findOne({

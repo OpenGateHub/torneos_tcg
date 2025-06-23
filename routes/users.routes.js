@@ -23,7 +23,6 @@ router.post(
 router.put(
     `/${MODULE_NAME}/:id`,
     authMiddleware,
-    isAdmin(),
     (req, res, next) => CONTROLLER.update(req, res, next)
 );
 
