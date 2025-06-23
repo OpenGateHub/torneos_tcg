@@ -11,14 +11,19 @@ const authOpcional = require('../middleware/authOpcional');
 const usuariosController = require('../controllers/usuariosController');
 const authController = require('../controllers/authController');
 const adminController = require('../controllers/adminController');
-const torneosController = require('../controllers/torneosController');
 const enfrentamientosController = require('../controllers/enfrentamientosController');
+
+// routes
+const torneosRoutes = require('./torneo.routes')
 
 module.exports = function(){
   //Index
   router.get('/', (req,res)=>{
     res.send("Servidor funcionando, torneito de cartulis")
   })
+
+
+  router.use(torneosRoutes)
   
   /** USUARIOS */
   //Crear Usuario
@@ -58,25 +63,6 @@ router.get('/perfil', auth, usuariosController.obtenerPerfil);
   router.delete('/admin/usuarios/:id', auth, verificarAdmin(['admin']), adminController.eliminarUsuario);
   router.put('/admin/usuarios/:id/rol', auth, verificarAdmin(['admin']), adminController.cambiarRol);
 
-  // Gestión de torneos
-  router.post('/admin/torneos', auth, verificarAdmin(['admin']), torneosController.crearTorneo);
-  router.get('/admin/torneos', auth, verificarAdmin(['admin']), torneosController.listarTorneos);
-  router.get('/admin/torneos/:id', auth, verificarAdmin(['admin']), torneosController.obtenerTorneo);
-  router.put('/admin/torneos/:id', auth, verificarAdmin(['admin']), torneosController.actualizarTorneo);
-  router.delete('/admin/torneos/:id', auth, verificarAdmin(['admin']), torneosController.eliminarTorneo);
-  router.get('/admin/torneos/:id/participantes', auth, verificarAdmin(['admin']), torneosController.listarParticipantes);
-  
-  /** TORNEOS */
-  // Ruta pública o protegida con auth solamente (opcional)
-  router.get('/torneos', torneosController.listarTorneos); 
-  //ruta publica para ver torneo especifico
-  router.get('/torneos/:id',authOpcional, torneosController.obtenerTorneo); 
-  //Inscripciones a torneo
-  router.post('/torneos/:id/inscribirse', auth, torneosController.inscribirseATorneo);
-  //Inscribir a usuario via admin 
-  router.post('/torneos/:torneoId/inscribir-usuario/:usuarioId', auth, verificarAdmin(['admin']), torneosController.inscribirUsuario);
-  //mostrar el ranking del torneo
-  router.get('/torneos/:torneoId/ranking', torneosController.obtenerRanking);
 
   //Enfrentamientos
   // Ruta para listar enfrentamientos por ronda
@@ -91,11 +77,6 @@ router.get('/perfil', auth, usuariosController.obtenerPerfil);
   router.post('/admin/torneos/:torneoId/enfrentamientos/:enfrentamientoId/resultado',auth, verificarAdmin(['admin']), enfrentamientosController.registrarResultadoIndividual);
   //genera la siguiente ronda de enfrentamientos s
   router.post('/admin/torneos/:torneoId/siguiente-ronda',auth, verificarAdmin(['admin']), enfrentamientosController.generarSiguienteRonda);
-
-
-
-
-
 
   /** AUTH */
   //Login
