@@ -1,5 +1,7 @@
 const Sequelize = require("sequelize");
 const db = require("../config/db");
+const Company = require('./Company');
+const Usuarios = require('./Usuarios');
 
 const UserCompany = db.define(
     "UserCompany",
@@ -9,11 +11,11 @@ const UserCompany = db.define(
             primaryKey: true,
             autoIncrement: true,
         },
-        user :{
+        user: {
             type: Sequelize.DataTypes.INTEGER,
             allowNull: false
         },
-        company :{
+        company: {
             type: Sequelize.DataTypes.INTEGER,
             allowNull: false
         }
@@ -23,5 +25,9 @@ const UserCompany = db.define(
         tableName: "users_companies",
     }
 );
+
+// Definir las asociaciones
+UserCompany.belongsTo(Company, { foreignKey: 'company' });
+UserCompany.belongsTo(Usuarios, { foreignKey: 'user' });
 
 module.exports = UserCompany;

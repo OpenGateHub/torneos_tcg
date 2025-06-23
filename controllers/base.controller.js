@@ -1,5 +1,5 @@
 class BaseController {
-    constructor(model) {
+    constructor({ model }) {
         this.model = model;
     }
 
@@ -34,6 +34,7 @@ class BaseController {
                 }
             });
         } catch (error) {
+            console.log(error)
             return res.status(500).json({
                 message: 'Error al obtener los registros',
                 error: error.message
@@ -55,6 +56,7 @@ class BaseController {
 
             return res.json(item);
         } catch (error) {
+            console.log(error)
             return res.status(500).json({
                 message: 'Error al obtener el registro',
                 error: error.message

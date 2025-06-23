@@ -68,6 +68,11 @@ const Torneo = db.define(
             allowNull: true,
             defaultValue: 0,
         },
+        maxParticipantes: {
+            type: Sequelize.DataTypes.INTEGER,
+            allowNull: true,
+            default: 0
+        },
         playoff: {
             type: Sequelize.DataTypes.INTEGER,
             allowNull: true,

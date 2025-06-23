@@ -2,36 +2,36 @@ const express = require("express");
 const router = express.Router();
 
 const authMiddleware = require("../middleware/auth");
-const companiesController = require("../controllers/companies.controller");
+const controller = require("../controllers/tournaments.controller");
 const isAdmin = require("../middleware/permissions/isAdmin");
 
-const MODULE_NAME = 'companies '
-const CONTROLLER = companiesController
+const MODULE_NAME = 'tournaments'
+const CONTROLLER = controller
 
 // Rutas públicas
-router.get(`/${MODULE_NAME}`, (req, res, next) => CONTROLLER.getAll(req, res, next));
-router.get(`/${MODULE_NAME}/:id`, (req, res, next) => CONTROLLER.getById(req, res, next));
+router.get(`/${MODULE_NAME}`, (req, res) => CONTROLLER.getAll(req, res));
+router.get(`/${MODULE_NAME}/:id`, (req, res) => CONTROLLER.getById(req, res));
 
 // Rutas protegidas (requieren autenticación y ser admin)
 router.post(
     `/${MODULE_NAME}`,
     authMiddleware,
     isAdmin(),
-    (req, res, next) => CONTROLLER.create(req, res, next)
+    (req, res) => CONTROLLER.create(req, res)
 );
 
 router.put(
     `/${MODULE_NAME}/:id`,
     authMiddleware,
     isAdmin(),
-    (req, res, next) => CONTROLLER.update(req, res, next)
+    (req, res) => CONTROLLER.update(req, res)
 );
 
 router.delete(
     `/${MODULE_NAME}/:id`,
     authMiddleware,
     isAdmin(),
-    (req, res, next) => CONTROLLER.delete(req, res, next)
+    (req, res) => CONTROLLER.delete(req, res)
 );
 
 module.exports = router;

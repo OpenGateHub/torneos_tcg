@@ -17,6 +17,7 @@ const enfrentamientosController = require('../controllers/enfrentamientosControl
 const torneosRoutes = require('./torneo.routes')
 const leaguesRoutes = require('./leagues.routes')
 const usersRoutes = require('./users.routes')
+const tournamentsRoutes = require('./tournaments.routes')
 
 module.exports = function(){
   //Index
@@ -28,6 +29,7 @@ module.exports = function(){
   router.use(torneosRoutes)
   router.use(leaguesRoutes)
   router.use(usersRoutes)
+  router.use(tournamentsRoutes)
   
   /** USUARIOS */
   //Crear Usuario
