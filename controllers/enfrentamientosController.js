@@ -7,8 +7,6 @@ const Torneo = require('../models/Torneo');
 exports.generarPrimerEnfrentamiento = async (req, res) => {
   const { torneoId } = req.params;
 
-
-
   try {
     // Verificar que las inscripciones están cerradas
     const torneo = await Torneo.findByPk(torneoId);

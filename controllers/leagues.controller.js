@@ -104,6 +104,50 @@ class LeagueController {
             return res.status(500).json({ message: 'Error al eliminar la liga', error: error.message });
         }
     }
+
+    async addTorneo(req, res) {
+        try {
+            const { id } = req.params; // ID de la liga
+            const { torneoId } = req.body; // ID del torneo a asignar
+
+            // Verificar que la liga existe
+            const league = await League.findByPk(id);
+            if (!league) {
+                return res.status(404).json({ message: 'Liga no encontrada' });
+            }
+
+            // Actualizar el torneo con el leagueId
+            const torneo = await Torneo.findByPk(torneoId);
+            if (!torneo) {
+                return res.status(404).json({ message: 'Torneo no encontrado' });
+            }
+
+            await torneo.update({ leagueId: id });
+
+            return res.json({ 
+                message: 'Torneo asignado correctamente a la liga',
+                torneo
+            });
+        } catch (error) {
+            return res.status(500).json({ 
+                message: 'Error al asignar el torneo a la liga', 
+                error: error.message 
+            });
+        }
+    }
+
+    async listTorneosSinLigas(req, res){
+        try {
+            const torneos = await Torneo.findAll({
+                where: {
+                    leagueId: null
+                }
+            });
+            return res.json(torneos);
+        } catch (error) {
+            return res.status(500).json({ message: 'Error al obtener los torneos sin ligas', error: error.message });
+        }
+    }
 }
 
 module.exports = new LeagueController();

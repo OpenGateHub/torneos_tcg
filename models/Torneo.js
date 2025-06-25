@@ -92,6 +92,16 @@ const Torneo = db.define(
             onUpdate: "CASCADE",
             onDelete: "CASCADE",
         },
+        leagueId: {
+            type: Sequelize.DataTypes.INTEGER,
+            allowNull: true,
+            references: {
+                model: "leagues",
+                key: "id",
+            },
+            onUpdate: "CASCADE",
+            onDelete: "SET NULL",
+        },
     },
     {
         timestamps: true,
@@ -109,6 +119,10 @@ Torneo.associate = (models) => {
     Torneo.belongsTo(models.Company, {
         foreignKey: "companyId",
         as: "company",
+    });
+    Torneo.belongsTo(models.League, {
+        foreignKey: "leagueId",
+        as: "league",
     });
 };
 

@@ -37,7 +37,11 @@ League.associate = (models) => {
     League.belongsTo(models.Company, {
         foreignKey: 'companyId',
         as: 'company'
-    })
+    });
+    League.hasMany(models.Torneo, {
+        foreignKey: 'leagueId',
+        as: 'tournaments'
+    });
 }
 
 module.exports = League
