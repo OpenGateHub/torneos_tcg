@@ -4,31 +4,40 @@ const router = express.Router();
 const authMiddleware = require("../middleware/auth");
 const verificarAdmin = require("../middleware/verificarAdmin");
 const leaguesController = require("../controllers/leagues.controller");
+const { createLeagueValidator, updateLeagueValidator } = require("../validators/leagues.validators");
+const { validateResult } = require("../helpers/validateHelper");
+
+const MODULE_NAME = 'leagues'
+const CONTROLLER = leaguesController
 
 // Rutas públicas
-router.get("/leagues", leaguesController.getAll);
-router.get("/leagues/:id", leaguesController.getById);
+router.get(`/${MODULE_NAME}`, (req, res, next) => CONTROLLER.getAll(req, res, next));
+router.get(`/${MODULE_NAME}/:id`, (req, res, next) => CONTROLLER.getById(req, res, next));
 
 // Rutas protegidas (requieren autenticación y ser admin)
 router.post(
-    "/leagues",
+    `/${MODULE_NAME}`,
     authMiddleware,
     verificarAdmin(["admin"]),
-    leaguesController.create
+    createLeagueValidator,
+    validateResult,
+    (req, res, next) => CONTROLLER.create(req, res, next)
 );
 
 router.put(
-    "/leagues/:id",
+    `/${MODULE_NAME}/:id`,
     authMiddleware,
     verificarAdmin(["admin"]),
-    leaguesController.update
+    updateLeagueValidator,
+    validateResult,
+    (req, res, next) => CONTROLLER.update(req, res, next)
 );
 
 router.delete(
-    "/leagues/:id",
+    `/${MODULE_NAME}/:id`,
     authMiddleware,
     verificarAdmin(["admin"]),
-    leaguesController.delete
+    (req, res, next) => CONTROLLER.delete(req, res, next)
 );
 
 module.exports = router;

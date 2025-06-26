@@ -11,7 +11,6 @@ const verificarAdmin = require('../middleware/verificarAdmin')
 const usuariosController = require('../controllers/usuariosController');
 const authController = require('../controllers/authController');
 const adminController = require('../controllers/adminController');
-const enfrentamientosController = require('../controllers/enfrentamientos.controller');
 
 // routes
 const torneosRoutes = require('./torneo.routes')

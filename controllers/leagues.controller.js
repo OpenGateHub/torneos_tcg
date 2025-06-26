@@ -1,25 +1,35 @@
 const League = require('../models/Ligas');
 const Company = require('../models/Company');
+const { getPaginationData, getPaginationOptions } = require('../helpers/paginationHelper');
 
 class LeagueController {
-    // Obtener todas las ligas
     async getAll(req, res) {
         try {
             const { company_id } = req.query;
-            const where = {};
+            const { page, limit, offset } = getPaginationOptions(req);
             
+            const where = {};
             if (company_id) {
                 where.companyId = company_id;
             }
             
-            const leagues = await League.findAll({
+            const queryOptions = {
                 where,
+                limit,
+                offset,
                 include: [{
                     model: Company,
                     as: 'company'
-                }]
+                }],
+                order: [['createdAt', 'DESC']]
+            };
+
+            const { count, rows: leagues } = await League.findAndCountAll(queryOptions);
+            
+            return res.json({
+                data: leagues,
+                pagination: getPaginationData(req, count, page, limit)
             });
-            return res.json(leagues);
         } catch (error) {
             return res.status(500).json({ message: 'Error al obtener las ligas', error: error.message });
         }
