@@ -1,6 +1,10 @@
 const { body, param, query } = require('express-validator');
 const { validateResult } = require('../helpers/validateHelper');
-
+const simpleValidatorCreate =  [
+    body('email').isEmail().withMessage('El correo no es válido'),
+    body('nombre').notEmpty().withMessage('El nombre es obligatorio'),
+    body('password').isLength({ min: 8 }).withMessage('La contraseña debe tener al menos 8 caracteres')
+]
 const validateCreate = [
     body('email')
         .exists().withMessage('El email es requerido')
@@ -54,4 +58,4 @@ const validateUpdate = [
     (req, res, next) => validateResult(req, res, next)
 ];
 
-module.exports = { validateCreate, validateUpdate };
+module.exports = { validateCreate, validateUpdate, simpleValidatorCreate };

@@ -8,7 +8,6 @@ const verificarAdmin = require('../middleware/verificarAdmin')
 // const authOpcional = require('../middleware/authOpcional');
 
 //Controllers
-const usuariosController = require('../controllers/usuariosController');
 const authController = require('../controllers/authController');
 const adminController = require('../controllers/adminController');
 
@@ -22,7 +21,10 @@ const enfrentamientosRoutes = require('./enfrentamientos.routes')
 module.exports = function () {
   //Index
   router.get('/', (req, res) => {
-    res.send("Servidor funcionando, torneito de cartulis")
+    res.send({
+      ok:true,
+      message: 'server running'
+    })
   })
 
   router.use(torneosRoutes)
@@ -30,32 +32,6 @@ module.exports = function () {
   router.use(usersRoutes)
   router.use(tournamentsRoutes)
   router.use(enfrentamientosRoutes)
-
-  /** USUARIOS */
-  //Crear Usuario
-  router.post('/crear-cuenta', [
-    body('email').isEmail().withMessage('El correo no es válido'),
-    body('nombre').notEmpty().withMessage('El nombre es obligatorio'),
-    body('password').isLength({ min: 8 }).withMessage('La contraseña debe tener al menos 8 caracteres')
-  ], usuariosController.crearCuenta);
-
-  //Confirmar cuenta
-  router.get('/confirmar-cuenta/:token', usuariosController.confirmarCuenta)
-  // reenviar token de confirmacion
-  router.post('/reenviar-confirmacion', usuariosController.reenviarConfirmacion);
-  //Recuperar contraseña
-  router.post('/recuperar-password', usuariosController.solicitarTokenRecuperacion)
-  //Recuperar contraseña
-  router.put('/restablecer-password/:token', usuariosController.restablecerPassword)
-
-  // Ver perfil del usuario autenticado
-  router.get('/perfil', auth, usuariosController.obtenerPerfil);
-
-  // Actualizar perfil
-  router.put('/perfil', auth, usuariosController.actualizarPerfil);
-
-  // Eliminar cuenta
-  router.delete('/perfil', auth, usuariosController.eliminarCuenta);
 
   /** ADMIN */
   //prueba de acceso administrador
