@@ -3,6 +3,7 @@ const Enfrentamientos = require('../models/Enfrentamientos');
 const enfrentamientosService = require('../services/enfrentamientos.service');
 
 class EnfrentamientosController {
+
     async generarPrimerEnfrentamiento(req, res) {
         const { torneoId } = req.params;
 
@@ -64,7 +65,7 @@ class EnfrentamientosController {
             const enfrentamientosPrevios = await enfrentamientosService.obtenerEnfrentamientosPrevios(torneoId);
             const jugadores = await enfrentamientosService.obtenerJugadoresOrdenadosPorVictorias(torneoId, enfrentamientosPrevios);
             const siguienteRonda = await enfrentamientosService.calcularSiguienteRonda(torneoId);
-            
+
             const nuevosEnfrentamientos = await enfrentamientosService.generarNuevosEnfrentamientos(
                 torneoId,
                 jugadores,
@@ -110,6 +111,28 @@ class EnfrentamientosController {
         } catch (error) {
             console.log(error);
             res.status(500).json({ mensaje: 'Error al obtener enfrentamientos agrupados por ronda' });
+        }
+    }
+
+
+    async openRound(req, res, next) {
+        const { torneoId, ronda } = req.params
+        try {
+            const listaDeEnfrentamientos = await enfrentamientosService.obtenerEnfrentamientosRonda(torneoId, ronda);
+
+            const enfrentamientosPorRonda =  listaDeEnfrentamientos.filter(enfrentamiento => Number(enfrentamiento.ronda) ===  Number(ronda))
+
+            enfrentamientosPorRonda.forEach( async enfrentamiento => {
+                let enfrentamientoInstance =  await Enfrentamientos.findOne({ where: { id: enfrentamiento.id, torneoId } });
+                enfrentamientoInstance.finalizado = false;
+                await enfrentamientoInstance.save();
+            })
+
+            return res.status(200).json({
+                message: "opened round",
+            })
+        } catch (error) {
+
         }
     }
 }

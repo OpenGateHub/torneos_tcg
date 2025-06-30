@@ -3,6 +3,7 @@ const router = express.Router();
 const auth = require('../middleware/auth');
 const verificarAdmin = require('../middleware/verificarAdmin');
 const enfrentamientosController = require('../controllers/enfrentamientos.controller');
+const isAdmin = require('../middleware/permissions/isAdmin');
 
 // Ruta para listar enfrentamientos por ronda
 router.get('/admin/torneos/:torneoId/enfrentamientos/:ronda',
@@ -25,7 +26,7 @@ router.post('/admin/torneos/:torneoId/generarEnfrentamientos',
 router.post('/admin/torneos/:torneoId/resultados',
     auth,
     verificarAdmin(['admin']),
-    enfrentamientosController.registrarResultados
+    (req, res, next) => enfrentamientosController.registrarResultados(req, res, next)
 );
 
 // Registra los resultados de los enfrentamientos individuales
@@ -39,7 +40,11 @@ router.post('/admin/torneos/:torneoId/enfrentamientos/:enfrentamientoId/resultad
 router.post('/admin/torneos/:torneoId/siguiente-ronda',
     auth,
     verificarAdmin(['admin']),
-    enfrentamientosController.generarSiguienteRonda
+    (req, res, next) => enfrentamientosController.generarSiguienteRonda(req, res, next)
 );
+
+router.get('/torneos/:torneoId/ronda/:ronda',
+    // auth, isAdmin(),
+    (req, res, next) => enfrentamientosController.openRound(req, res, next))
 
 module.exports = router;
