@@ -3,8 +3,9 @@ module.exports = () => {
     return (req, res, next) => {
       // Verificamos si el usuario tiene un rol válido y permitido
       const { rol } = req.usuario; // El rol viene del JWT que hemos añadido al request
+      console.log(rol, '========')
   
-      if (rol === 'admin') {
+      if (rol !== 'admin') {
         return res.status(403).json({ mensaje: 'Acceso denegado: No tienes permisos' });
       }
   

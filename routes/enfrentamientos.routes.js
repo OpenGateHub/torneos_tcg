@@ -44,7 +44,7 @@ router.post('/admin/torneos/:torneoId/siguiente-ronda',
 );
 
 router.get('/torneos/:torneoId/ronda/:ronda',
-    // auth, isAdmin(),
+    auth, isAdmin(),
     (req, res, next) => enfrentamientosController.openRound(req, res, next))
 
 module.exports = router;
