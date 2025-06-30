@@ -118,21 +118,15 @@ class EnfrentamientosController {
     async openRound(req, res, next) {
         const { torneoId, ronda } = req.params
         try {
-            const listaDeEnfrentamientos = await enfrentamientosService.obtenerEnfrentamientosRonda(torneoId, ronda);
-
-            const enfrentamientosPorRonda =  listaDeEnfrentamientos.filter(enfrentamiento => Number(enfrentamiento.ronda) ===  Number(ronda))
-
-            enfrentamientosPorRonda.forEach( async enfrentamiento => {
-                let enfrentamientoInstance =  await Enfrentamientos.findOne({ where: { id: enfrentamiento.id, torneoId } });
-                enfrentamientoInstance.finalizado = false;
-                await enfrentamientoInstance.save();
-            })
-
+            await enfrentamientosService.openRound(torneoId, ronda)
             return res.status(200).json({
                 message: "opened round",
-            })
+            });
         } catch (error) {
-
+            return res.status(500).json({
+                message: "Error al abrir la ronda",
+                error: error.message
+            });
         }
     }
 }

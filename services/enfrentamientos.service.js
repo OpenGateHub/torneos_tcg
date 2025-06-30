@@ -227,13 +227,13 @@ class EnfrentamientosService {
     }
 
     verificarEnfrentamientoPrevio(key, enfrentamientosPrevios) {
-        return Array.from(new Set(enfrentamientosPrevios.map(e => 
+        return Array.from(new Set(enfrentamientosPrevios.map(e =>
             [e.jugador1Id, e.jugador2Id].sort().join('-')
         ))).includes(key);
     }
 
     contarRepeticionesEnfrentamiento(jugadorAId, jugadorBId, enfrentamientosPrevios) {
-        return enfrentamientosPrevios.filter(e => 
+        return enfrentamientosPrevios.filter(e =>
             (e.jugador1Id === jugadorAId && e.jugador2Id === jugadorBId) ||
             (e.jugador1Id === jugadorBId && e.jugador2Id === jugadorAId)
         ).length;
@@ -302,6 +302,32 @@ class EnfrentamientosService {
         });
 
         return enfrentamientosPorRonda;
+    }
+
+    async openRound(torneoId, ronda) {
+        try {
+            // Reabrir enfrentamientos de la ronda actual
+            await Enfrentamientos.update(
+                { finalizado: false },
+                {
+                    where: {
+                        torneoId,
+                        ronda: Number(ronda)
+                    }
+                }
+            );
+
+            // Eliminar todos los enfrentamientos de la última ronda en una sola operación
+            await Enfrentamientos.destroy({
+                where: {
+                    torneoId,
+                    ronda: Number(ronda) + 1
+                }
+            });
+
+        } catch (error) {
+            return error
+        }
     }
 }
 
