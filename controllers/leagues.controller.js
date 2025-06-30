@@ -7,12 +7,12 @@ class LeagueController {
         try {
             const { company_id } = req.query;
             const { page, limit, offset } = getPaginationOptions(req);
-            
+
             const where = {};
             if (company_id) {
                 where.companyId = company_id;
             }
-            
+
             const queryOptions = {
                 where,
                 limit,
@@ -25,7 +25,7 @@ class LeagueController {
             };
 
             const { count, rows: leagues } = await League.findAndCountAll(queryOptions);
-            
+
             return res.json({
                 data: leagues,
                 pagination: getPaginationData(req, count, page, limit)
@@ -59,12 +59,14 @@ class LeagueController {
     // Crear una nueva liga
     async create(req, res) {
         try {
-            const { name, description, companyId } = req.body;
-            
+            const { name, description, companyId, startDate, endDate } = req.body;
+
             const league = await League.create({
                 name,
                 description,
-                companyId
+                companyId,
+                startDate,
+                endDate,
             });
 
             return res.status(201).json(league);
@@ -134,19 +136,19 @@ class LeagueController {
 
             await torneo.update({ leagueId: id });
 
-            return res.json({ 
+            return res.json({
                 message: 'Torneo asignado correctamente a la liga',
                 torneo
             });
         } catch (error) {
-            return res.status(500).json({ 
-                message: 'Error al asignar el torneo a la liga', 
-                error: error.message 
+            return res.status(500).json({
+                message: 'Error al asignar el torneo a la liga',
+                error: error.message
             });
         }
     }
 
-    async listTorneosSinLigas(req, res){
+    async listTorneosSinLigas(req, res) {
         try {
             const torneos = await Torneo.findAll({
                 where: {

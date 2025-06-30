@@ -15,7 +15,19 @@ const League = db.define(
         },
         description: {
             type: Sequelize.DataTypes.CHAR(250),
-            allowNull: false
+            allowNull: true
+        },
+        startDate: {
+            type: Sequelize.DataTypes.DATE,
+            allowNull: true
+        },
+        endDate: {
+            type: Sequelize.DataTypes.DATE,
+            allowNull: true
+        },
+        is_active: {
+            type: Sequelize.DataTypes.DATE,
+            allowNull: true
         },
         companyId: {
             type: Sequelize.DataTypes.INTEGER,
