@@ -21,7 +21,7 @@ class BaseController {
             return res.json({
                 data: rows,
                 pagination: {
-                    totalItems: count,
+                    count,
                     itemsPerPage: limit,
                     currentPage: page,
                     totalPages,

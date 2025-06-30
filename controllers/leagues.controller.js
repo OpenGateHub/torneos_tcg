@@ -12,7 +12,7 @@ class LeagueController {
             if (company_id) {
                 where.companyId = company_id;
             }
-
+            
             const queryOptions = {
                 where,
                 limit,

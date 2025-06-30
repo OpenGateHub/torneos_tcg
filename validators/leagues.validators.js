@@ -47,8 +47,6 @@ const updateLeagueValidator = [
         .notEmpty().withMessage('La fecha de fin es obligatoria')
         .isDate().withMessage('La fecha de fin debe ser una fecha válida')
         .toDate(),
-
-
     body('companyId')
         .optional()
         .isInt().withMessage('El ID de la compañía debe ser un número entero')
