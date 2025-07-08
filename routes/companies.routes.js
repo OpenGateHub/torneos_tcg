@@ -5,7 +5,10 @@ const authMiddleware = require("../middleware/auth");
 const companiesController = require("../controllers/companies.controller");
 const isAdmin = require("../middleware/permissions/isAdmin");
 
-const MODULE_NAME = 'companies '
+
+
+// BASIC ROUTE CONFIG
+const MODULE_NAME = 'companies'
 const CONTROLLER = companiesController
 
 // Rutas públicas
@@ -16,14 +19,12 @@ router.get(`/${MODULE_NAME}/:id`, (req, res, next) => CONTROLLER.getById(req, re
 router.post(
     `/${MODULE_NAME}`,
     authMiddleware,
-    isAdmin(),
     (req, res, next) => CONTROLLER.create(req, res, next)
 );
 
 router.put(
     `/${MODULE_NAME}/:id`,
     authMiddleware,
-    isAdmin(),
     (req, res, next) => CONTROLLER.update(req, res, next)
 );
 

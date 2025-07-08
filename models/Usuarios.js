@@ -97,6 +97,10 @@ const Usuarios = db.define('Usuarios', {
     type: Sequelize.DataTypes.STRING,
     allowNull: true
   },
+  show_is_company_modal: {
+    type:  Sequelize.DataTypes.BOOLEAN,
+    defaultValue: true
+  }
 
     // passwordFuerte: {
     //     type: Sequelize.DataTypes.STRING,

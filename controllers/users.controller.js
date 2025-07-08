@@ -153,7 +153,7 @@ class UsuariosController {
   async obtenerPerfil(req, res) {
     try {
       const usuario = await Usuarios.findByPk(req.usuario.id, {
-        attributes: ['id', 'nombre', 'last_name', 'email', 'rol', 'birthdate', 'provincia', 'dni', 'bio', 'dni', 'createdAt']
+        attributes: ['id', 'nombre', 'last_name', 'email', 'rol', 'birthdate', 'provincia', 'dni', 'bio', 'dni', 'createdAt', "show_is_company_modal"]
       });
 
       const user_company = await UserCompany.findOne({
@@ -312,6 +312,7 @@ class UsuariosController {
         city,
         bio,
         dni,
+        show_is_company_modal,
       } = req.body;
 
       const user = await Usuarios.findByPk(id);
@@ -327,7 +328,8 @@ class UsuariosController {
         provincia,
         city,
         bio,
-        dni
+        dni,
+        show_is_company_modal,
       });
 
       // Excluir datos sensibles en la respuesta
