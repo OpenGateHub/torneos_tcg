@@ -12,7 +12,7 @@ class LeagueController {
             if (company_id) {
                 where.companyId = company_id;
             }
-            
+
             const queryOptions = {
                 where,
                 limit,
@@ -59,7 +59,7 @@ class LeagueController {
     // Crear una nueva liga
     async create(req, res) {
         try {
-            const { name, description, companyId, startDate, endDate } = req.body;
+            const { name, description, companyId, startDate, endDate, firstPlacePrize, secondPlacePrize, thirdPlacePrize } = req.body;
 
             const league = await League.create({
                 name,
@@ -67,6 +67,9 @@ class LeagueController {
                 companyId,
                 startDate,
                 endDate,
+                firstPlacePrize,
+                secondPlacePrize,
+                thirdPlacePrize
             });
 
             return res.status(201).json(league);
@@ -79,7 +82,7 @@ class LeagueController {
     async update(req, res) {
         try {
             const { id } = req.params;
-            const { name, description, companyId } = req.body;
+            const { name, description, companyId , ...rest} = req.body;
 
             const league = await League.findByPk(id);
 
@@ -90,7 +93,8 @@ class LeagueController {
             await league.update({
                 name,
                 description,
-                companyId
+                companyId,
+                rest
             });
 
             return res.json(league);

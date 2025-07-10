@@ -29,6 +29,18 @@ const League = db.define(
             type: Sequelize.DataTypes.DATE,
             allowNull: true
         },
+        firstPlacePrize:{
+            type: Sequelize.DataTypes.CHAR(100),
+            allowNull: true
+        },
+        secondPlacePrize:{
+            type: Sequelize.DataTypes.CHAR(100),
+            allowNull: true
+        },
+        thirdPlacePrize:{
+            type: Sequelize.DataTypes.CHAR(100),
+            allowNull: true
+        },
         companyId: {
             type: Sequelize.DataTypes.INTEGER,
             references: {

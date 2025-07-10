@@ -23,7 +23,16 @@ const createLeagueValidator = [
 
     body('companyId')
         .notEmpty().withMessage('El ID de la compañía es obligatorio')
-        .isInt().withMessage('El ID de la compañía debe ser un número entero')
+        .isInt().withMessage('El ID de la compañía debe ser un número entero'),
+    body('firstPlacePrize')
+        .optional()
+        .isInt().withMessage("El premio de primer lugar debe ser un número entero"),
+    body('secondPlacePrize')
+        .optional()
+        .isInt().withMessage("El premio de segundo lugar debe ser un número entero"),
+    body('thirdPlacePrize')
+        .optional()
+        .isInt().withMessage("El premio de tercer lugar debe ser un número entero")
 ];
 
 const updateLeagueValidator = [
@@ -49,7 +58,16 @@ const updateLeagueValidator = [
         .toDate(),
     body('companyId')
         .optional()
-        .isInt().withMessage('El ID de la compañía debe ser un número entero')
+        .isInt().withMessage('El ID de la compañía debe ser un número entero'),
+    body('firstPlacePrize')
+        .optional()
+        .isInt().withMessage("El premio de primer lugar debe ser un número entero"),
+    body('secondPlacePrize')
+        .optional()
+        .isInt().withMessage("El premio de segundo lugar debe ser un número entero"),
+    body('thirdPlacePrize')
+        .optional()
+        .isInt().withMessage("El premio de tercer lugar debe ser un número entero")
 ];
 
 module.exports = {
