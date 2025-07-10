@@ -40,4 +40,9 @@ router.delete(
     (req, res, next) => CONTROLLER.delete(req, res, next)
 );
 
+router.get(
+    `/${MODULE_NAME}/:id/table`,
+    (req, res, next) => CONTROLLER.leagueTable(req, res, next)
+)
+
 module.exports = router;

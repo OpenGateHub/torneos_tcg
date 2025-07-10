@@ -124,6 +124,10 @@ Torneo.associate = (models) => {
         foreignKey: "leagueId",
         as: "league",
     });
+    Torneo.hasMany(models.Enfrentamientos, {
+        foreignKey: "torneoId",
+        as: "enfrentamientos",
+    });
 };
 
 module.exports = Torneo;
