@@ -18,6 +18,7 @@ const usersRoutes = require('./users.routes')
 const tournamentsRoutes = require('./tournaments.routes')
 const enfrentamientosRoutes = require('./enfrentamientos.routes')
 const companiesRoutes = require('./companies.routes')
+const applicationRoutes = require('./application.routes')
 
 module.exports = function () {
   //Index
@@ -34,6 +35,7 @@ module.exports = function () {
   router.use(tournamentsRoutes)
   router.use(enfrentamientosRoutes)
   router.use(companiesRoutes)
+  router.use(applicationRoutes)
 
   /** ADMIN */
   //prueba de acceso administrador

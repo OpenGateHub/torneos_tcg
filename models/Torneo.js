@@ -102,6 +102,22 @@ const Torneo = db.define(
             onUpdate: "CASCADE",
             onDelete: "SET NULL",
         },
+          firstPlacePrize:{
+            type: Sequelize.DataTypes.CHAR(100),
+            allowNull: true
+        },
+        secondPlacePrize:{
+            type: Sequelize.DataTypes.CHAR(100),
+            allowNull: true
+        },
+        thirdPlacePrize:{
+            type: Sequelize.DataTypes.CHAR(100),
+            allowNull: true
+        },
+        otherPrizes:{
+            type: Sequelize.DataTypes.CHAR(100),
+            allowNull: true
+        }
     },
     {
         timestamps: true,
