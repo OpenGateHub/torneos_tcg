@@ -3,6 +3,8 @@ const router = require('./routes');
 require('dotenv').config({path:'variables.env'});
 const cors = require('cors');
 require('colors')
+const { fixCompanyIdMigration } = require('./migrations/fix-company-id');
+const { makeCompanyIdNotNull } = require('./migrations/make-company-id-not-null');
 
 
 //Conexion a la DB y carga de modelos
@@ -25,9 +27,28 @@ Ligas.associate(db.models)
 
 // Inscripciones.associate(db.models);
 // force true only development, i need implement de migration system
-db.sync({
-  alter: true
-}).then(()=> console.log("DB conectada".green)).catch((error)=> console.log(error))
+
+async function initializeDatabase() {
+  try {
+    // Primero ejecutar la migración de companyId
+    await fixCompanyIdMigration();
+    
+    // Luego hacer el sync
+    await db.sync({
+      alter: true
+    });
+    
+    // Finalmente hacer companyId NOT NULL
+    await makeCompanyIdNotNull();
+    
+    console.log("DB conectada".green);
+  } catch (error) {
+    console.log("Error inicializando la base de datos:", error);
+    process.exit(1);
+  }
+}
+
+initializeDatabase();
 
 //Creacion de la App
 const app = express();
