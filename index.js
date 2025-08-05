@@ -30,13 +30,17 @@ Ligas.associate(db.models)
 
 async function initializeDatabase() {
   try {
-    // Primero ejecutar la migración de companyId
-    await fixCompanyIdMigration();
+    console.log("Inicializando base de datos...");
     
-    // Luego hacer el sync
+    // Primero hacer el sync para crear las tablas y columnas
     await db.sync({
       alter: true
     });
+    
+    console.log("Sync de base de datos completado");
+    
+    // Luego ejecutar la migración de companyId
+    await fixCompanyIdMigration();
     
     // Finalmente hacer companyId NOT NULL
     await makeCompanyIdNotNull();

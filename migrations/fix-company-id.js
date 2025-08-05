@@ -1,44 +1,60 @@
 const db = require("../config/db");
-const Company = require("../models/Company");
-const Torneo = require("../models/Torneo");
 
 async function fixCompanyIdMigration() {
     try {
         console.log("Iniciando migración de companyId...");
         
-        // 1. Buscar o crear una empresa por defecto
-        let defaultCompany = await Company.findOne({
-            where: { name: "Empresa por defecto" }
-        });
+        // 1. Verificar si la columna companyId ya existe
+        const columnExists = await db.query(`
+            SELECT column_name 
+            FROM information_schema.columns 
+            WHERE table_name = 'torneos' 
+            AND column_name = 'companyId'
+        `, { type: db.QueryTypes.SELECT });
         
-        if (!defaultCompany) {
-            console.log("Creando empresa por defecto...");
-            defaultCompany = await Company.create({
-                name: "Empresa por defecto",
-                address: "Dirección no especificada",
-                phone: "000-000-0000",
-                email: "admin@default.com",
-                coin_name: "Puntos",
-                owner: "Administrador"
-            });
-            console.log(`Empresa por defecto creada con ID: ${defaultCompany.id}`);
-        } else {
-            console.log(`Empresa por defecto encontrada con ID: ${defaultCompany.id}`);
+        if (columnExists.length === 0) {
+            console.log("La columna companyId no existe aún, omitiendo migración inicial...");
+            return;
         }
         
-        // 2. Actualizar todos los torneos que tengan companyId null
-        const torneosNull = await Torneo.findAll({
-            where: { companyId: null }
-        });
+        // 2. Buscar o crear una empresa por defecto usando SQL directo
+        let defaultCompanyResult = await db.query(`
+            SELECT id FROM companies WHERE name = 'Empresa por defecto' LIMIT 1
+        `, { type: db.QueryTypes.SELECT });
         
-        console.log(`Encontrados ${torneosNull.length} torneos sin companyId`);
+        let defaultCompanyId;
         
-        if (torneosNull.length > 0) {
-            await Torneo.update(
-                { companyId: defaultCompany.id },
-                { where: { companyId: null } }
-            );
-            console.log(`Actualizados ${torneosNull.length} torneos con companyId: ${defaultCompany.id}`);
+        if (defaultCompanyResult.length === 0) {
+            console.log("Creando empresa por defecto...");
+            const insertResult = await db.query(`
+                INSERT INTO companies (name, address, phone, email, coin_name, owner, "createdAt", "updatedAt")
+                VALUES ('Empresa por defecto', 'Dirección no especificada', '000-000-0000', 'admin@default.com', 'Puntos', 'Administrador', NOW(), NOW())
+                RETURNING id
+            `, { type: db.QueryTypes.INSERT });
+            
+            defaultCompanyId = insertResult[0][0].id;
+            console.log(`Empresa por defecto creada con ID: ${defaultCompanyId}`);
+        } else {
+            defaultCompanyId = defaultCompanyResult[0].id;
+            console.log(`Empresa por defecto encontrada con ID: ${defaultCompanyId}`);
+        }
+        
+        // 3. Contar y actualizar torneos sin companyId usando SQL directo
+        const countResult = await db.query(`
+            SELECT COUNT(*) as count FROM torneos WHERE "companyId" IS NULL
+        `, { type: db.QueryTypes.SELECT });
+        
+        const torneosNullCount = countResult[0].count;
+        console.log(`Encontrados ${torneosNullCount} torneos sin companyId`);
+        
+        if (torneosNullCount > 0) {
+            await db.query(`
+                UPDATE torneos SET "companyId" = :companyId WHERE "companyId" IS NULL
+            `, {
+                replacements: { companyId: defaultCompanyId },
+                type: db.QueryTypes.UPDATE
+            });
+            console.log(`Actualizados ${torneosNullCount} torneos con companyId: ${defaultCompanyId}`);
         }
         
         console.log("Migración completada exitosamente");

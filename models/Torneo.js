@@ -84,7 +84,7 @@ const Torneo = db.define(
         },
         companyId: {
             type: Sequelize.DataTypes.INTEGER,
-            allowNull: true,
+            allowNull: true, // Permitir null temporalmente para la migración
             references: {
                 model: "companies",
                 key: "id",
